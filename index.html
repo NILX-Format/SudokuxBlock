@@ -2176,8 +2176,8 @@ window.addEventListener('resize',()=>{_csz=0;});
 function startGhostDrag(ghost, blockIdx, x, y){
   document.body.appendChild(ghost);
   const rect=ghost.getBoundingClientRect();
-  const ox=rect.width/2;
-  const oy=Math.max(rect.height*0.68, 44);
+  const ox=Math.max(rect.height*0.1, 10);
+  const oy=Math.max(rect.height*0.1, 10);
   ghost.style.left=(x-ox)+'px';
   ghost.style.top=(y-oy)+'px';
   pdrag={blockIdx,ghostEl:ghost,ox,oy};
