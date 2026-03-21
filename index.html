@@ -332,158 +332,144 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 .hold-slot{display:none;}
 
 /* ══════════════════════════════════════════════
+   MOBILE TOOLBAR — hidden on desktop
+   ══════════════════════════════════════════════ */
+.mobile-toolbar{display:none;}
+
+/* ══════════════════════════════════════════════
    MOBILE LAYOUT  ≤ 600px
-   Strategy:
-   - Single column, full-width board
-   - Topbar collapses to logo + icon buttons
-   - Right panel moves below hand zone
-   - Tools become horizontal strip
    ══════════════════════════════════════════════ */
 @media(max-width:600px){
 
-  /* ── Screen padding ── */
-  #screen-game{padding:0 0 80px;}
+  #screen-game{padding:0 0 20px;}
 
-  /* ── Topbar ── */
-  .game-topbar{
-    padding:8px 10px;
-    margin-bottom:8px;
-    max-width:100%;
-  }
+  /* Topbar */
+  .game-topbar{padding:6px 8px;margin-bottom:6px;max-width:100%;}
   .topbar-logo{font-size:1.1rem;}
   .topbar-right{gap:4px;}
   .topbar-diff{display:none;}
+  .theme-switch .theme-opt{padding:4px 6px;font-size:0.38rem;}
   .theme-switch .theme-opt .t-icon{font-size:0.75rem;}
-  .theme-switch .theme-opt{padding:4px 7px;font-size:0.38rem;}
-  .topbar-btn{
-    font-size:0.38rem;
-    padding:5px 7px;
-    letter-spacing:0.02em;
-  }
+  .topbar-btn{font-size:0.38rem;padding:5px 6px;letter-spacing:0.02em;}
 
-  /* ── Game layout: single column ── */
-  .game-layout{
-    flex-direction:column;
-    align-items:stretch;
-    gap:0;
-    width:100%;
-    padding:0;
-  }
+  /* Single column layout */
+  .game-layout{flex-direction:column;align-items:stretch;gap:0;width:100%;padding:0;}
+  .board-wrap{width:100%;padding:0 6px;}
 
-  /* ── Board wrap: full width ── */
-  .board-wrap{
-    width:100%;
-    padding:0 6px;
-  }
-
-  /* ── Score bar: full width, compact ── */
-  .score-bar{
-    width:100% !important;
-    margin-bottom:4px;
-  }
-  .score-bar-num{font-size:1.15rem;}
-  .score-bar-lbl{font-size:0.32rem;}
+  /* Score bar */
+  .score-bar{width:100%!important;margin-bottom:4px;}
+  .score-bar-num{font-size:1.1rem;}
+  .score-bar-lbl{font-size:0.3rem;}
   .score-bar-item{padding:5px 2px;}
-  .mult-track{width:50px !important;}
+  .mult-track{width:44px!important;}
 
-  /* ── Status bar ── */
-  .status-bar{width:100% !important;}
+  /* Status bar */
+  .status-bar{width:100%!important;}
 
-  /* ── Board: full width dynamic ── */
-  #board{
-    width:100% !important;
-    height:auto !important;
-    aspect-ratio:1/1;
-  }
+  /* Board full width */
+  #board{width:100%!important;height:auto!important;aspect-ratio:1/1;}
   .board-container{width:100%;}
 
-  /* ── Hand zone: full width ── */
+  /* Hand zone — above grid on mobile via order */
   .hand-zone{
-    width:100% !important;
-    margin-top:4px;
-    padding:8px 8px 6px;
+    width:100%!important;
+    margin-top:0;
+    margin-bottom:4px;
+    padding:7px 8px 6px;
+    order:-1; /* moves above board */
   }
+  .board-wrap{display:flex;flex-direction:column;}
+  .score-bar{order:-2;}
   .tray{gap:4px;}
-  .tray-slot{padding:6px 4px;}
-  .bm-cell{width:18px !important;height:18px !important;}
+  .tray-slot{padding:5px 3px;}
+  .bm-cell{width:16px!important;height:16px!important;}
+  .tray-name{font-size:0.42rem;}
+  .tray-hint{font-size:0.36rem;}
 
-  /* ── Right panel: full width below hand ── */
-  .right-panel{
-    width:100%;
-    padding:0 6px;
-    margin-top:6px;
-    flex-direction:column;
-    gap:6px;
-  }
+  /* Hide desktop right panel entirely */
+  .right-panel{display:none!important;}
 
-  /* ── Resources box: compact ── */
-  .pbox{padding:10px 12px;}
-  .token-num{font-size:1.4rem;}
-  .token-hint{display:none;}
-
-  /* ── Tool box: horizontal strip ── */
-  .tool-box{
+  /* Show mobile toolbar */
+  .mobile-toolbar{
+    display:flex;
     flex-direction:row;
     gap:5px;
+    width:100%;
+    margin-top:4px;
+    align-items:stretch;
   }
-  .tool-item{
-    flex:1;
-    padding:8px 6px;
-    min-width:0;
+
+  /* Token pill */
+  .mob-token{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--surface);border:1px solid var(--border2);
+    padding:6px 8px;gap:2px;min-width:44px;
   }
-  .tool-header{flex-direction:column;align-items:center;gap:3px;}
-  .tool-row{flex-direction:column;align-items:center;gap:3px;}
-  .tool-header-left{flex-direction:column;align-items:center;gap:3px;}
-  .tool-svg-wrap{width:22px;height:22px;}
-  .tool-name{font-size:0.38rem;letter-spacing:0.04em;text-align:center;}
-  .tool-count{font-size:1rem;}
-  .tool-pips{justify-content:center;margin-top:3px;}
-  .tool-pip{width:5px;height:5px;}
+  .mob-token-num{
+    font-family:'Bebas Neue',sans-serif;font-size:1.3rem;line-height:1;color:var(--warn);
+  }
 
-  /* Hold preview */
-  .hold-preview{min-height:36px;}
-  .hold-empty-hint{font-size:0.36rem;}
+  /* Mobile tool items */
+  .mob-tool{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    background:var(--surface);border:1px solid var(--border2);
+    padding:6px 4px;cursor:pointer;transition:all 0.15s;
+    user-select:none;min-width:0;
+  }
+  .mob-tool:hover:not(.exhausted){border-color:var(--accent2);background:var(--glb);}
+  .mob-tool.exhausted{opacity:0.35;cursor:not-allowed;}
+  .mob-tool.active-tool{border-color:var(--danger);background:rgba(255,45,85,0.08);animation:toolPulse 1s ease infinite;}
+  .mob-tool-top{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
+  .mob-tool-name{font-size:0.34rem;color:var(--text);letter-spacing:0.06em;text-align:center;}
+  .mob-tool-count{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--accent2);line-height:1;}
+  .mob-tool-count.zero{color:var(--muted);}
+  .mob-tool-count.bump{animation:bump 0.22s ease;}
 
-  /* ── Cell font ── */
-  .cell{font-size:0.75rem !important;}
-  .snap-ghost-cell{font-size:0.75rem;}
+  /* Hold in mobile toolbar */
+  .mob-tool.hold-area{border-style:dashed;cursor:default;}
+  .mob-tool.hold-area.drag-over{border-color:var(--accent3)!important;border-style:solid!important;background:rgba(158,255,59,0.08)!important;}
+  .mob-tool.hold-area.swap-ready{border-color:var(--accent2);border-style:solid;}
+  .hold-preview{margin-top:4px;min-height:28px;display:flex;justify-content:center;align-items:center;cursor:grab;width:100%;}
+  .hold-empty-hint{font-size:0.32rem;color:var(--muted);letter-spacing:0.18em;}
 
-  /* ── Last warn ── */
-  .last-block-warn{font-size:0.48rem;}
+  /* Tool pips in mobile */
+  .tool-pips{display:flex;gap:3px;margin-top:3px;justify-content:center;}
+  .tool-pip{width:5px;height:5px;border-radius:50%;}
 
-  /* ── Modals ── */
-  .modal-box{padding:28px 20px;width:95%;}
+  /* Last warn */
+  .last-block-warn{font-size:0.46rem;}
+
+  /* Cell font */
+  .cell{font-size:0.72rem!important;}
+
+  /* Modals */
+  .modal-box{padding:24px 18px;width:96%;}
+  .modal-title{font-size:2.2rem;}
 }
 
-/* Extra small phones */
 @media(max-width:380px){
-  .topbar-logo{font-size:0.95rem;}
-  .topbar-btn{padding:4px 5px;font-size:0.34rem;}
-  .theme-switch .theme-opt{padding:3px 5px;}
+  .topbar-logo{font-size:0.9rem;}
+  .topbar-btn{padding:4px 5px;font-size:0.33rem;}
   .score-bar-num{font-size:0.95rem;}
-  .tool-name{font-size:0.33rem;}
-  .token-num{font-size:1.2rem;}
+  .mob-token-num{font-size:1.1rem;}
+  .mob-tool-count{font-size:0.9rem;}
+  .menu-logo{font-size:3rem;}
 }
 
 /* Mobile menu + settings */
 @media(max-width:600px){
   .menu-logo{font-size:3.5rem;}
-  .menu-tagline{font-size:0.5rem;letter-spacing:0.25em;margin-bottom:36px;}
+  .menu-tagline{font-size:0.5rem;letter-spacing:0.22em;margin-bottom:32px;}
   .menu-btns{width:calc(100% - 40px);max-width:300px;}
-  .menu-btn{padding:14px 16px;font-size:0.65rem;}
-
-  #screen-settings{padding:24px 16px;gap:12px;}
+  #screen-settings{padding:24px 14px;gap:12px;}
   .sub-header{max-width:100%;}
   .scard{max-width:100%;}
   .diff-grid{grid-template-columns:repeat(2,1fr);}
   .save-btn{max-width:100%;}
-
-  #screen-leaderboard{padding:24px 16px;gap:12px;}
-  .lb-tabs{max-width:100%;}
-  .lb-list{max-width:100%;}
-  .lb-row{padding:9px 10px;}
+  #screen-leaderboard{padding:24px 14px;gap:12px;}
+  .lb-tabs,.lb-list,.clear-lb-btn{max-width:100%;}
+  .lb-row{padding:8px 10px;}
   .lb-score{font-size:1.2rem;}
-  .clear-lb-btn{max-width:100%;}
 }
 .token-icon{font-size:1rem;}
 .token-num{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;line-height:1;color:var(--warn);}
@@ -681,7 +667,7 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   <div class="game-layout">
     <div class="board-wrap">
 
-      <!-- SCORE BAR — above grid, full width -->
+      <!-- SCORE BAR -->
       <div class="score-bar">
         <div class="score-bar-item">
           <div class="score-bar-num" id="scoreDisp">0</div>
@@ -709,6 +695,15 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
         </div>
       </div>
 
+      <!-- HAND ZONE — desktop: order 3 (below grid) / mobile: order 1 (above grid) -->
+      <div class="hand-zone" id="handZone">
+        <div class="hand-zone-header">
+          <span class="hand-zone-label">Hand</span>
+          <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ Reroll <span id="rerollCost">1⬡</span></button>
+        </div>
+        <div class="tray" id="tray"></div>
+      </div>
+
       <div class="status-bar">
         <span class="sb-txt">filled <span class="sb-val" id="placedCount">0/81</span></span>
         <span class="sb-txt">combo <span class="sb-val" id="comboBar">—</span></span>
@@ -719,13 +714,38 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
       </div>
       <div class="last-block-warn" id="lastWarn"></div>
 
-      <!-- HAND ZONE — below grid, full width -->
-      <div class="hand-zone">
-        <div class="hand-zone-header">
-          <span class="hand-zone-label">Hand</span>
-          <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ Reroll <span id="rerollCost">1⬡</span></button>
+      <!-- MOBILE TOOLBAR — ⬡ token + HOLD + UNDO + HAMMER, hidden on desktop -->
+      <div class="mobile-toolbar">
+        <div class="mob-token">
+          <span style="font-size:1rem;">⬡</span>
+          <span class="mob-token-num" id="tokensDispMob">0</span>
+          <span style="font-size:0.36rem;color:var(--muted2);letter-spacing:0.1em;">TOKENS</span>
         </div>
-        <div class="tray" id="tray"></div>
+        <div class="mob-tool hold-area" id="holdArea">
+          <div class="mob-tool-top">
+            <div class="tool-svg-wrap" id="holdSVG"></div>
+            <span class="mob-tool-name">HOLD</span>
+            <span class="mob-tool-count" id="holdCount">×1</span>
+          </div>
+          <div class="hold-preview" id="holdPreview">
+            <span class="hold-empty-hint">EMPTY</span>
+          </div>
+        </div>
+        <div class="mob-tool" id="undoTool" onclick="undoPlace()">
+          <div class="mob-tool-top">
+            <div class="tool-svg-wrap" id="undoSVG"></div>
+            <span class="mob-tool-name">UNDO</span>
+            <span class="mob-tool-count" id="undoCount">×3</span>
+          </div>
+          <div class="tool-pips" id="undoPips"></div>
+        </div>
+        <div class="mob-tool" id="hammerTool" onclick="activateHammer()">
+          <div class="mob-tool-top">
+            <div class="tool-svg-wrap" id="hammerToolSVG"></div>
+            <span class="mob-tool-name">HAMMER</span>
+            <span class="mob-tool-count" id="hammerCount">×2</span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -745,40 +765,40 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   <!-- TOOL BOX -->
   <div class="pbox tool-box">
 
-    <!-- HOLD -->
-    <div class="tool-item hold-area" id="holdArea">
+    <!-- HOLD (desktop) -->
+    <div class="tool-item hold-area" id="holdAreaDesktop">
       <div class="tool-header">
         <div class="tool-header-left">
-          <div class="tool-svg-wrap" id="holdSVG"></div>
+          <div class="tool-svg-wrap" id="holdSVGDesktop"></div>
           <span class="tool-name">HOLD</span>
         </div>
-        <span class="tool-count" id="holdCount">×1</span>
+        <span class="tool-count" id="holdCountDesktop">×1</span>
       </div>
-      <div class="hold-preview" id="holdPreview">
+      <div class="hold-preview" id="holdPreviewDesktop">
         <span class="hold-empty-hint">EMPTY</span>
       </div>
     </div>
 
-    <!-- UNDO -->
-    <div class="tool-item" id="undoTool" onclick="undoPlace()">
+    <!-- UNDO (desktop) -->
+    <div class="tool-item" id="undoToolDesktop" onclick="undoPlace()">
       <div class="tool-row">
         <div class="tool-header-left">
-          <div class="tool-svg-wrap" id="undoSVG"></div>
+          <div class="tool-svg-wrap" id="undoSVGDesktop"></div>
           <span class="tool-name">UNDO</span>
         </div>
-        <span class="tool-count" id="undoCount">×3</span>
+        <span class="tool-count" id="undoCountDesktop">×3</span>
       </div>
-      <div class="tool-pips" id="undoPips"></div>
+      <div class="tool-pips" id="undoPipsDesktop"></div>
     </div>
 
-    <!-- HAMMER -->
-    <div class="tool-item" id="hammerTool" onclick="activateHammer()">
+    <!-- HAMMER (desktop) -->
+    <div class="tool-item" id="hammerToolDesktop" onclick="activateHammer()">
       <div class="tool-row">
         <div class="tool-header-left">
-          <div class="tool-svg-wrap" id="hammerToolSVG"></div>
+          <div class="tool-svg-wrap" id="hammerToolSVGDesktop"></div>
           <span class="tool-name">HAMMER</span>
         </div>
-        <span class="tool-count" id="hammerCount">×2</span>
+        <span class="tool-count" id="hammerCountDesktop">×2</span>
       </div>
     </div>
 
@@ -930,7 +950,7 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 // NAVIGATION
 // ══════════════════════════════════════════════════════
 function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goPlay(){goScreen('screen-game');newGame();bgmPlay();}
+function goPlay(){unlockAudio();goScreen('screen-game');newGame();bgmPlay();}
 function restartGame(){document.getElementById('go-overlay').classList.remove('show');newGame();bgmPlay();}
 function showLBFromGame(){document.getElementById('go-overlay').classList.remove('show');renderLB('all');goScreen('screen-leaderboard');}
 function showHelp(){document.getElementById('help-overlay').classList.add('show');}
@@ -956,7 +976,9 @@ function onGSVolChange(el){
   volState.sfx=v;
   volState.sfxMuted=(v===0);
   document.getElementById('gs-vol-label').textContent=el.value+'%';
+  unlockAudio();
   syncVolUI();saveVol();
+  if(v>0) previewSFX();
 }
 function toggleMute(){
   volState.sfxMuted=!volState.sfxMuted;
@@ -965,7 +987,9 @@ function toggleMute(){
   document.getElementById('gs-sfx-vol').value=Math.round(volState.sfx*100);
   document.getElementById('gs-vol-label').textContent=Math.round(volState.sfx*100)+'%';
   document.getElementById('muteBtn').textContent=volState.sfxMuted?'UNMUTE':'MUTE';
+  unlockAudio();
   syncVolUI();saveVol();
+  if(!volState.sfxMuted&&volState.sfx>0) previewSFX(true);
 }
 
 // ── Volume overlay ──
@@ -977,12 +1001,24 @@ function hideVolume(){document.getElementById('volume-overlay').classList.remove
 
 // Volume state
 let volState={sfx:1.0, bgm:0.1, sfxMuted:false, bgmMuted:false, _sfxBefore:1.0, _bgmBefore:0.1};
+let lastSfxPreviewAt=0;
+
+function isGameActive(){
+  const gameScreen=document.getElementById('screen-game');
+  return !!(gameScreen&&gameScreen.classList.contains('active'));
+}
 
 function onVolChange(type, val){
   const v=parseFloat(val)/100;
   volState[type]=v;
   volState[type+'Muted']=(v===0);
+  unlockAudio();
   syncVolUI();saveVol();
+  if(type==='sfx'&&v>0) previewSFX();
+  if(type==='bgm'&&isGameActive()&&currentTheme==='ZOO'){
+    if(v>0&&!volState.bgmMuted) bgmResume();
+    else bgmApplyVol();
+  }
 }
 function toggleVolMute(type){
   const muted=!volState[type+'Muted'];
@@ -990,7 +1026,13 @@ function toggleVolMute(type){
   if(muted){volState['_'+type+'Before']=volState[type]||0.5;volState[type]=0;}
   else{volState[type]=volState['_'+type+'Before']||0.5;}
   document.getElementById(type+'-slider').value=Math.round(volState[type]*100);
+  unlockAudio();
   syncVolUI();saveVol();
+  if(type==='sfx'&&!muted&&volState.sfx>0) previewSFX(true);
+  if(type==='bgm'&&isGameActive()&&currentTheme==='ZOO'){
+    if(!muted&&volState.bgm>0) bgmResume();
+    else bgmApplyVol();
+  }
 }
 function syncVolUI(){
   // Volume overlay sliders
@@ -1039,11 +1081,44 @@ const bgmA = new Audio('zoo_bgm.mp3');
 const bgmB = new Audio('zoo_bgm.mp3');
 bgmA.loop = false;
 bgmB.loop = false;
+bgmA.preload = 'auto';
+bgmB.preload = 'auto';
+bgmA.playsInline = true;
+bgmB.playsInline = true;
+bgmA.setAttribute('playsinline','');
+bgmB.setAttribute('playsinline','');
+bgmA.setAttribute('webkit-playsinline','');
+bgmB.setAttribute('webkit-playsinline','');
 
 let currentBGM = bgmA;
 let nextBGM    = bgmB;
 let BGM_FADE_TIME     = 1.2;
 let BGM_CHECK_INTERVAL = null;
+let audioUnlocked = false;
+
+function unlockAudio(){
+  rAC();
+  [bgmA,bgmB].forEach(audio=>audio.load());
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  [bgmA,bgmB].forEach(audio=>{
+    const prevMuted = audio.muted;
+    const prevVol = audio.volume;
+    audio.muted = true;
+    audio.volume = 0;
+    audio.play()
+      .then(()=>{
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = prevMuted;
+        audio.volume = prevVol;
+      })
+      .catch(()=>{
+        audio.muted = prevMuted;
+        audio.volume = prevVol;
+      });
+  });
+}
 
 function fadeIn(audio, targetVol){
   const target = Math.max(0, Math.min(1, targetVol));
@@ -1096,6 +1171,7 @@ function bgmPlay(){
   if(currentTheme !== 'ZOO') return;
   const target = volState.bgmMuted ? 0 : volState.bgm;
   if(target <= 0) return;
+  unlockAudio();
   currentBGM.currentTime = 0;
   currentBGM.volume = 0;
   currentBGM.play().catch(()=>{});
@@ -1119,6 +1195,7 @@ function bgmResume(){
   if(currentTheme !== 'ZOO') return;
   const target = volState.bgmMuted ? 0 : volState.bgm;
   if(target <= 0) return;
+  unlockAudio();
   currentBGM.play().catch(()=>{});
   fadeIn(currentBGM, target);
   startBgmLooper();
@@ -1140,6 +1217,14 @@ function tone(freqs,dur,type='sine',vol=0.18,delay=0){
     g.gain.exponentialRampToValueAtTime(0.0001,now+dur);
     o.start(now);o.stop(now+dur);
   });
+}
+function previewSFX(force=false){
+  const now=Date.now();
+  if(!force&&now-lastSfxPreviewAt<120)return;
+  lastSfxPreviewAt=now;
+  unlockAudio();
+  tone([660],0.04,'sine',0.08);
+  tone([880],0.05,'triangle',0.05,0.03);
 }
 function sfxPlace(n){const b=180+n*20;tone([b],0.08,'triangle',0.12);tone([b*1.5],0.06,'sine',0.07,0.05);}
 function sfxError(){tone([120,90],0.18,'sawtooth',0.08);}
@@ -1225,11 +1310,14 @@ function setTheme(theme){
   [...hand.filter(Boolean),...(holdBlock?[holdBlock]:[]),..._placedBlocks].forEach(b=>{
     if(b&&b.tier) b.color=getBlockColor(b.tier);
   });
-  // Refresh hammer cursor if active
+  // Refresh hammer cursor + tool SVGs if active
   if(hammerMode){
-    const cursor=document.getElementById('hammer-cursor');
+    const cursor=$id('hammer-cursor');
     if(cursor) cursor.innerHTML=getHammerSVG();
   }
+  // Re-inject all tool SVGs (theme change affects hammer icon)
+  const hmSvg=$id('hammerToolSVG');if(hmSvg)hmSvg.innerHTML=getHammerSVG();
+  const hmSvgD=$id('hammerToolSVGDesktop');if(hmSvgD)hmSvgD.innerHTML=getHammerSVG();
   renderBoard();renderTray();renderHold();
 }
 
@@ -1448,38 +1536,28 @@ function renderTray(){
     slot.appendChild(mini);slot.appendChild(meta);slot.appendChild(badge);tray.appendChild(slot);
   });
   const rem=hand.filter(b=>b&&!b.used).length;
-  document.getElementById('lastWarn').textContent=(rem===1&&!holdBlock)?'⚠ LAST BLOCK!':'';
-  const rr=document.getElementById('rerollBtn');if(rr)rr.disabled=tokens<1;
-  // Highlight hold area when a block is selected (click-to-store hint)
-  const holdArea=document.getElementById('holdArea');
-  if(holdArea) holdArea.classList.toggle('swap-ready', activeIdx!==null);
+  $id('lastWarn').textContent=(rem===1&&!holdBlock)?'⚠ LAST BLOCK!':'';
+  const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<1;
+  // Highlight both hold areas when a block is selected
+  const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
+  const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
 }
 
-function renderHold(){
-  // Inject SVGs into tool headers
-  const hSvg=document.getElementById('holdSVG');
-  const uSvg=document.getElementById('undoSVG');
-  const hmSvg=document.getElementById('hammerToolSVG');
-  if(hSvg) hSvg.innerHTML=HOLD_SVG;
-  if(uSvg) uSvg.innerHTML=UNDO_SVG;
-  if(hmSvg) hmSvg.innerHTML=getHammerSVG();
-
-  const preview=document.getElementById('holdPreview');
-  if(!preview) return;
-  preview.innerHTML='';
-
-  if(!holdBlock){
-    const e=document.createElement('span');e.className='hold-empty-hint';e.textContent='EMPTY';
-    preview.appendChild(e);
-    return;
-  }
-
-  // Build mini block preview — larger cells since we have more space
+// Helper: update an element by ID if it exists
+function $id(id){ return document.getElementById(id); }
+// Helper: set innerHTML on both mobile and desktop variants
+function syncEl(mobileId, desktopId, html){
+  const m=$id(mobileId), d=$id(desktopId);
+  if(m) m.innerHTML=html;
+  if(d) d.innerHTML=html;
+}
+// Helper: build hold preview mini grid
+function buildHoldMini(cellSz){
+  if(!holdBlock) return null;
   const cells=holdBlock.cells;
   const mr=Math.max(...cells.map(([r])=>r));
   const mc=Math.max(...cells.map(([,c])=>c));
   const mini=document.createElement('div');mini.className='block-mini';
-  const cellSz=22;
   mini.style.gridTemplateColumns=`repeat(${mc+1},${cellSz}px)`;
   mini.style.gridTemplateRows=`repeat(${mr+1},${cellSz}px)`;
   for(let r=0;r<=mr;r++) for(let c=0;c<=mc;c++){
@@ -1499,10 +1577,20 @@ function renderHold(){
     } else { bmc.classList.add('e'); }
     mini.appendChild(bmc);
   }
-  preview.appendChild(mini);
+  return mini;
+}
 
-  // Drag-out from hold preview
-  preview.onpointerdown = e => {
+function setHoldPreview(previewEl, cellSz){
+  if(!previewEl) return;
+  previewEl.innerHTML='';
+  if(!holdBlock){
+    const e=document.createElement('span');e.className='hold-empty-hint';e.textContent='EMPTY';
+    previewEl.appendChild(e);
+    return;
+  }
+  const mini=buildHoldMini(cellSz);
+  if(mini) previewEl.appendChild(mini);
+  previewEl.onpointerdown = e => {
     if(!holdBlock) return;
     e.preventDefault();
     const ghost=buildGhostFromBlock(holdBlock);
@@ -1515,6 +1603,21 @@ function renderHold(){
     document.addEventListener('pointerup',onHoldDrop);
     document.addEventListener('pointercancel',onHoldDrop);
   };
+}
+
+function renderHold(){
+  // SVG icons — mobile toolbar
+  const hSvg=$id('holdSVG');       if(hSvg) hSvg.innerHTML=HOLD_SVG;
+  const uSvg=$id('undoSVG');       if(uSvg) uSvg.innerHTML=UNDO_SVG;
+  const hmSvg=$id('hammerToolSVG');if(hmSvg) hmSvg.innerHTML=getHammerSVG();
+  // SVG icons — desktop panel
+  const hSvgD=$id('holdSVGDesktop');       if(hSvgD) hSvgD.innerHTML=HOLD_SVG;
+  const uSvgD=$id('undoSVGDesktop');       if(uSvgD) uSvgD.innerHTML=UNDO_SVG;
+  const hmSvgD=$id('hammerToolSVGDesktop');if(hmSvgD) hmSvgD.innerHTML=getHammerSVG();
+
+  // Hold previews — mobile (smaller cells) and desktop (larger cells)
+  setHoldPreview($id('holdPreview'), 16);
+  setHoldPreview($id('holdPreviewDesktop'), 22);
 }
 
 function buildGhostFromBlock(block){
@@ -1582,35 +1685,38 @@ function placeHoldBlock(r,c){
 
 let _lastScore=0;
 function updateStats(){
-  const scoreEl=document.getElementById('scoreDisp');
+  const scoreEl=$id('scoreDisp');
   if(score!==_lastScore){
     scoreEl.classList.remove('score-bump');void scoreEl.offsetWidth;scoreEl.classList.add('score-bump');
     _lastScore=score;
   }
   scoreEl.textContent=score.toLocaleString();
-  document.getElementById('movesDisp').textContent=moves;
-  document.getElementById('errorsDisp').textContent=errors;
-  document.getElementById('comboDisp').textContent=combo;
-  document.getElementById('comboBar').textContent=combo>0?`×${combo}`:'—';
+  $id('movesDisp').textContent=moves;
+  $id('errorsDisp').textContent=errors;
+  $id('comboDisp').textContent=combo;
+  $id('comboBar').textContent=combo>0?`×${combo}`:'—';
   const pct=Math.min(((multiplier-1)/2)*100,100);
   const streakTxt=streak>=5?` 🔥${streak}`:(streak>0?` ×${streak}`:'');
-  document.getElementById('multDisp').textContent=`×${multiplier.toFixed(1)}${streakTxt}`;
-  document.getElementById('multBar').style.width=pct+'%';
+  $id('multDisp').textContent=`×${multiplier.toFixed(1)}${streakTxt}`;
+  $id('multBar').style.width=pct+'%';
 
-  // Tokens
-  const td=document.getElementById('tokensDisp');if(td)td.textContent=tokens;
+  // Tokens — both mobile and desktop
+  const td=$id('tokensDisp');if(td)td.textContent=tokens;
+  const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
 
-  // Tool counts with bump animation
-  _updateToolCount('hammerCount', hammers, MAX_UNDO);
-  // hammer tool state
-  const ht=document.getElementById('hammerTool');
+  // Hammer count — mobile + desktop
+  _updateToolCount('hammerCount', hammers);
+  _updateToolCount('hammerCountDesktop', hammers);
+
+  // Hammer tool state — mobile + desktop
+  const ht=$id('hammerTool');
   if(ht){ ht.classList.toggle('exhausted',hammers<=0); ht.classList.toggle('active-tool',hammerMode); }
-  const hBtn=document.getElementById('hammerBtn');
-  if(hBtn) hBtn.disabled=hammers<=0;
+  const htd=$id('hammerToolDesktop');
+  if(htd){ htd.classList.toggle('exhausted',hammers<=0); htd.classList.toggle('active-tool',hammerMode); }
 }
 
-function _updateToolCount(id, val, max){
-  const el=document.getElementById(id); if(!el) return;
+function _updateToolCount(id, val){
+  const el=$id(id); if(!el) return;
   const prev=parseInt(el.dataset.prev||val);
   if(val!==prev){ el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump'); }
   el.dataset.prev=val;
@@ -1620,20 +1726,36 @@ function _updateToolCount(id, val, max){
 
 function updateUndoUI(){
   const canUndo=undoUsed<MAX_UNDO&&undoStack.length>0;
-  const ut=document.getElementById('undoTool');
-  if(ut) ut.classList.toggle('exhausted',!canUndo);
-
   const remaining=MAX_UNDO-undoUsed;
-  _updateToolCount('undoCount', remaining, MAX_UNDO);
 
-  // pips
-  const pips=document.getElementById('undoPips');
+  // Mobile undo tool
+  const ut=$id('undoTool');
+  if(ut) ut.classList.toggle('exhausted',!canUndo);
+  _updateToolCount('undoCount', remaining);
+
+  // Desktop undo tool
+  const utd=$id('undoToolDesktop');
+  if(utd) utd.classList.toggle('exhausted',!canUndo);
+  _updateToolCount('undoCountDesktop', remaining);
+
+  // Pips — mobile
+  const pips=$id('undoPips');
   if(pips){
     pips.innerHTML='';
     for(let i=0;i<MAX_UNDO;i++){
       const p=document.createElement('div');
       p.className='tool-pip'+(i<undoUsed?' used':'');
       pips.appendChild(p);
+    }
+  }
+  // Pips — desktop
+  const pipsd=$id('undoPipsDesktop');
+  if(pipsd){
+    pipsd.innerHTML='';
+    for(let i=0;i<MAX_UNDO;i++){
+      const p=document.createElement('div');
+      p.className='tool-pip'+(i<undoUsed?' used':'');
+      pipsd.appendChild(p);
     }
   }
 }
@@ -1681,13 +1803,16 @@ const UNDO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><p
 function getHammerSVG(){ return currentTheme==='ZOO' ? HAMMER_SVG_ZOO : HAMMER_SVG_NUM; }
 
 function applyHammerMode(){
-  const board=document.getElementById('board');
-  const cursor=document.getElementById('hammer-cursor');
-  const hTool=document.getElementById('hammerTool');
+  const board=$id('board');
+  const cursor=$id('hammer-cursor');
+  // Both mobile and desktop hammer tool elements
+  const hTool=$id('hammerTool');
+  const hToolD=$id('hammerToolDesktop');
 
   if(hammerMode){
     board.classList.add('hammer-mode');
     if(hTool) hTool.classList.add('active-tool');
+    if(hToolD) hToolD.classList.add('active-tool');
     cursor.innerHTML=getHammerSVG();
     cursor.style.display='block';
     document.querySelectorAll('.cell').forEach(cell=>{
@@ -1696,7 +1821,8 @@ function applyHammerMode(){
     });
   } else {
     board.classList.remove('hammer-mode');
-    if(hTool){ hTool.classList.remove('active-tool'); }
+    if(hTool) hTool.classList.remove('active-tool');
+    if(hToolD) hToolD.classList.remove('active-tool');
     cursor.style.display='none';
     document.querySelectorAll('.cell.hammer-target').forEach(c=>c.classList.remove('hammer-target'));
   }
@@ -1978,6 +2104,16 @@ function onPDown(e,idx){
   document.addEventListener('pointercancel',onPUp);
 }
 
+function getActiveHoldArea(){
+  // Return whichever hold area is currently visible
+  const mob=$id('holdArea');
+  const desk=$id('holdAreaDesktop');
+  // Check display — mobile is visible if its offsetParent is non-null
+  if(mob && mob.offsetParent!==null) return mob;
+  if(desk && desk.offsetParent!==null) return desk;
+  return mob; // fallback
+}
+
 function onPMove(e){
   e.preventDefault();if(!pdrag)return;
   pdrag.ghostEl.style.left=(e.clientX-pdrag.ox)+'px';
@@ -1985,10 +2121,12 @@ function onPMove(e){
 
   // Highlight hold area when dragging a hand block over it
   if(pdrag.blockIdx!=='HOLD'){
-    const holdArea=document.getElementById('holdArea');
+    const holdArea=getActiveHoldArea();
     if(holdArea){
       const hr=holdArea.getBoundingClientRect();
       const over=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
+      // Clear other hold area highlight
+      [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
       holdArea.classList.toggle('drag-over', over);
       if(over){clearSnap();clearHL();return;}
     }
@@ -2034,18 +2172,20 @@ function onPUp(e){
   document.removeEventListener('pointercancel',onPUp);
   if(!pdrag)return;
 
-  // Clear hold drag-over highlight
-  const holdArea=document.getElementById('holdArea');
-  if(holdArea) holdArea.classList.remove('drag-over');
+  // Clear hold drag-over highlight on both
+  [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
 
   const drop=snapTarget, di=pdrag.blockIdx;
   pdrag.ghostEl.remove(); pdrag=null; clearSnap(); clearHL();
 
-  // Check if dropped on hold area (from hand)
-  if(di!=='HOLD' && holdArea){
-    const hr=holdArea.getBoundingClientRect();
-    const overHold=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
-    if(overHold){ storeToHold(di); return; }
+  // Check if dropped on any visible hold area (from hand)
+  if(di!=='HOLD'){
+    const holdArea=getActiveHoldArea();
+    if(holdArea){
+      const hr=holdArea.getBoundingClientRect();
+      const overHold=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
+      if(overHold){ storeToHold(di); return; }
+    }
   }
 
   if(drop) tryPlace(di, drop.r, drop.c);
@@ -2111,6 +2251,9 @@ document.addEventListener('keydown',e=>{
 loadSettings();
 loadVol();
 document.body.classList.add('zoo-mode');
+['pointerdown','touchstart','keydown'].forEach(evt=>{
+  document.addEventListener(evt,unlockAudio,{passive:true});
+});
 </script>
 
 </body>
