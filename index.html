@@ -2179,9 +2179,10 @@ function startGhostDrag(ghost, blockIdx, x, y){
   document.body.appendChild(ghost);
   const rect=ghost.getBoundingClientRect();
   const ox=rect.width/2;
-  const oy=rect.height;
+  const lift=12;
+  const oy=Math.max(rect.height*0.82, 36);
   ghost.style.left=(x-ox)+'px';
-  ghost.style.top=(y-oy)+'px';
+  ghost.style.top=(y-oy-lift)+'px';
   pdrag={blockIdx,ghostEl:ghost,ox,oy};
   snapTarget=null;
 }
