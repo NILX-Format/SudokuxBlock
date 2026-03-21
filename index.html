@@ -1131,119 +1131,104 @@ function rAC(){if(AC&&AC.state==='suspended')AC.resume();}
 const SFX_BOOST = 5.0;
 
 // ══════════════════════════════════════════════════════
-// BGM — dual-buffer crossfade (no CORS, works on file://)
+// BGM — single looping buffer for mobile stability
 // ══════════════════════════════════════════════════════
 const bgmA = new Audio('zoo_bgm.mp3');
-const bgmB = new Audio('zoo_bgm.mp3');
-bgmA.loop = false;
-bgmB.loop = false;
+bgmA.loop = true;
 bgmA.preload = 'auto';
-bgmB.preload = 'auto';
 bgmA.playsInline = true;
-bgmB.playsInline = true;
 bgmA.setAttribute('playsinline','');
-bgmB.setAttribute('playsinline','');
 bgmA.setAttribute('webkit-playsinline','');
-bgmB.setAttribute('webkit-playsinline','');
 
 let currentBGM = bgmA;
-let nextBGM    = bgmB;
-let BGM_FADE_TIME     = 1.2;
-let BGM_CHECK_INTERVAL = null;
+let bgmFadeTimer = null;
 let audioUnlocked = false;
 
 function unlockAudio(){
   rAC();
   if(audioUnlocked) return;
   audioUnlocked = true;
-  [bgmA,bgmB].forEach(audio=>{
-    const prevMuted = audio.muted;
-    const prevVol = audio.volume;
-    audio.muted = true;
-    audio.volume = 0;
-    audio.play()
-      .then(()=>{
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = prevMuted;
-        audio.volume = prevVol;
-      })
-      .catch(()=>{
-        audio.muted = prevMuted;
-        audio.volume = prevVol;
-      });
-  });
+  const prevMuted = currentBGM.muted;
+  const prevVol = currentBGM.volume;
+  currentBGM.muted = true;
+  currentBGM.volume = 0;
+  currentBGM.play()
+    .then(()=>{
+      currentBGM.pause();
+      currentBGM.currentTime = 0;
+      currentBGM.muted = prevMuted;
+      currentBGM.volume = prevVol;
+    })
+    .catch(()=>{
+      currentBGM.muted = prevMuted;
+      currentBGM.volume = prevVol;
+    });
 }
 
-function fadeIn(audio, targetVol){
+function stopBgmFade(){
+  if(bgmFadeTimer){
+    clearInterval(bgmFadeTimer);
+    bgmFadeTimer = null;
+  }
+}
+
+function setBgmVolume(targetVol, pauseWhenSilent=false){
+  const audio=currentBGM;
+  if(!audio) return;
+  stopBgmFade();
   const target = Math.max(0, Math.min(1, targetVol));
-  const step   = target / (BGM_FADE_TIME * 20);
-  const iv = setInterval(()=>{
-    audio.volume = Math.min(target, audio.volume + step);
-    if(audio.volume >= target) clearInterval(iv);
-  }, 50);
-}
-
-function fadeOut(audio){
-  const step = audio.volume / (BGM_FADE_TIME * 20);
-  const iv = setInterval(()=>{
-    audio.volume = Math.max(0, audio.volume - step);
-    if(audio.volume <= 0){ audio.pause(); clearInterval(iv); }
-  }, 50);
-}
-
-function startBgmLooper(){
-  if(BGM_CHECK_INTERVAL) clearInterval(BGM_CHECK_INTERVAL);
-  BGM_CHECK_INTERVAL = setInterval(()=>{
-    if(!currentBGM.duration) return;
-    const remaining = currentBGM.duration - currentBGM.currentTime;
-    if(remaining < BGM_FADE_TIME + 0.1) crossfadeBGM();
-  }, 100);
-}
-
-function crossfadeBGM(){
-  clearInterval(BGM_CHECK_INTERVAL);
-  nextBGM.currentTime = 0;
-  nextBGM.volume = 0;
-  nextBGM.play().catch(()=>{});
-  fadeIn(nextBGM, volState.bgmMuted ? 0 : volState.bgm);
-  fadeOut(currentBGM);
-  // swap buffers
-  const tmp = currentBGM;
-  currentBGM = nextBGM;
-  nextBGM = tmp;
-  startBgmLooper();
+  const start = Number.isFinite(audio.volume) ? audio.volume : 0;
+  if(Math.abs(start - target) < 0.005){
+    audio.volume = target;
+    if(pauseWhenSilent && target === 0) audio.pause();
+    return;
+  }
+  const durationMs = 180;
+  const stepMs = 30;
+  const steps = Math.max(1, Math.round(durationMs / stepMs));
+  let step = 0;
+  bgmFadeTimer = setInterval(()=>{
+    step++;
+    const progress = step / steps;
+    audio.volume = start + (target - start) * progress;
+    if(step >= steps){
+      stopBgmFade();
+      audio.volume = target;
+      if(pauseWhenSilent && target === 0) audio.pause();
+    }
+  }, stepMs);
 }
 
 function bgmApplyVol(){
   const target = Math.max(0, Math.min(1, volState.bgmMuted ? 0 : volState.bgm));
-  // Ramp current playing buffer to new volume
-  if(currentBGM && !currentBGM.paused) fadeIn(currentBGM, target);
-  else if(currentBGM) currentBGM.volume = target;
+  if(!currentBGM) return;
+  currentBGM.muted = false;
+  if(currentBGM.paused && target > 0 && currentTheme === 'ZOO'){
+    currentBGM.play().catch(()=>{});
+  }
+  setBgmVolume(target, target === 0);
 }
 
 function bgmPlay(){
   if(currentTheme !== 'ZOO') return;
   const target = volState.bgmMuted ? 0 : volState.bgm;
-  if(target <= 0) return;
   unlockAudio();
-  currentBGM.currentTime = 0;
+  stopBgmFade();
+  currentBGM.muted = false;
   currentBGM.volume = 0;
   currentBGM.play().catch(()=>{});
-  fadeIn(currentBGM, target);
-  startBgmLooper();
+  setBgmVolume(target, target === 0);
 }
 
 function bgmStop(){
-  clearInterval(BGM_CHECK_INTERVAL);
-  fadeOut(currentBGM);
-  fadeOut(nextBGM);
-  setTimeout(()=>{ bgmA.currentTime=0; bgmB.currentTime=0; }, BGM_FADE_TIME * 1000 + 100);
+  if(!currentBGM) return;
+  setBgmVolume(0, true);
+  setTimeout(()=>{ currentBGM.currentTime=0; }, 220);
 }
 
 function bgmPause(){
-  clearInterval(BGM_CHECK_INTERVAL);
-  fadeOut(currentBGM);
+  if(!currentBGM) return;
+  setBgmVolume(0, true);
 }
 
 function bgmResume(){
@@ -1251,9 +1236,9 @@ function bgmResume(){
   const target = volState.bgmMuted ? 0 : volState.bgm;
   if(target <= 0) return;
   unlockAudio();
+  currentBGM.muted = false;
   currentBGM.play().catch(()=>{});
-  fadeIn(currentBGM, target);
-  startBgmLooper();
+  setBgmVolume(target);
 }
 
 // ══════════════════════════════════════════════════════
