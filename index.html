@@ -310,6 +310,7 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 }
 .tray-slot.active{border-color:var(--accent2);background:var(--glb);}
 .tray-slot.used{opacity:0.12;pointer-events:none;}
+.tray-slot.dragging-origin{opacity:0;pointer-events:none;}
 .tray-slot:hover:not(.used){border-color:var(--border2);background:var(--surface2);}
 .tray-slot:active{cursor:grabbing;}
 .block-mini{display:grid;gap:2px;flex-shrink:0;}
@@ -1594,7 +1595,8 @@ function renderTray(){
   const tray=document.getElementById('tray');tray.innerHTML='';
   hand.forEach((block,i)=>{
     if(!block||block.used)return;
-    const slot=document.createElement('div');slot.className='tray-slot'+(activeIdx===i?' active':'');
+    const draggingOrigin=pdrag&&pdrag.blockIdx===i;
+    const slot=document.createElement('div');slot.className='tray-slot'+(activeIdx===i?' active':'')+(draggingOrigin?' dragging-origin':'');
     slot.addEventListener('click',()=>selBlock(i));
     slot.addEventListener('pointerdown',e=>onPDown(e,i));
     const cells=block.cells,mr=Math.max(...cells.map(([r])=>r)),mc=Math.max(...cells.map(([,c])=>c));
@@ -2176,8 +2178,8 @@ window.addEventListener('resize',()=>{_csz=0;});
 function startGhostDrag(ghost, blockIdx, x, y){
   document.body.appendChild(ghost);
   const rect=ghost.getBoundingClientRect();
-  const ox=Math.max(rect.height*0.1, 10);
-  const oy=Math.max(rect.height*0.1, 10);
+  const ox=rect.width/2;
+  const oy=rect.height;
   ghost.style.left=(x-ox)+'px';
   ghost.style.top=(y-oy)+'px';
   pdrag={blockIdx,ghostEl:ghost,ox,oy};
