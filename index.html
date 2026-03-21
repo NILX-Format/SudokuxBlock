@@ -1128,7 +1128,7 @@ function loadVol(){
 // ══════════════════════════════════════════════════════
 const AC=(()=>{try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}})();
 function rAC(){if(AC&&AC.state==='suspended')AC.resume();}
-const SFX_BOOST = 3.0;
+const SFX_BOOST = 5.0;
 
 // ══════════════════════════════════════════════════════
 // BGM — dual-buffer crossfade (no CORS, works on file://)
@@ -1154,7 +1154,6 @@ let audioUnlocked = false;
 
 function unlockAudio(){
   rAC();
-  [bgmA,bgmB].forEach(audio=>audio.load());
   if(audioUnlocked) return;
   audioUnlocked = true;
   [bgmA,bgmB].forEach(audio=>{
@@ -1279,17 +1278,17 @@ function previewSFX(force=false){
   if(!force&&now-lastSfxPreviewAt<120)return;
   lastSfxPreviewAt=now;
   unlockAudio();
-  tone([660],0.04,'sine',0.08);
-  tone([880],0.05,'triangle',0.05,0.03);
+  tone([660],0.05,'sine',0.11);
+  tone([880],0.06,'triangle',0.08,0.03);
 }
-function sfxPlace(n){const b=180+n*20;tone([b],0.08,'triangle',0.12);tone([b*1.5],0.06,'sine',0.07,0.05);}
-function sfxError(){tone([120,90],0.18,'sawtooth',0.08);}
-function sfxClearLine(){[523,659,784].forEach((f,i)=>tone([f],0.18,'sine',0.16,i*0.08));}
-function sfxClearBox(){tone([523,659,784,1047],0.35,'sine',0.14);[1047,1319,1568,2093].forEach((f,i)=>tone([f],0.15,'sine',0.09,0.12+i*0.07));}
-function sfxCombo(n){const b=440+n*40;tone([b],0.05,'square',0.1);tone([b*2],0.08,'sine',0.12,0.04);}
-function sfxHold(){tone([320],0.05,'triangle',0.08);tone([480],0.05,'triangle',0.06,0.05);}
-function sfxHammer(){tone([80],0.12,'sawtooth',0.18);tone([160],0.06,'triangle',0.1,0.04);}
-function sfxGameOver(){[440,349,294,220].forEach((f,i)=>tone([f],0.25,'sine',0.15,i*0.18));}
+function sfxPlace(n){const b=180+n*20;tone([b],0.09,'triangle',0.16);tone([b*1.5],0.08,'sine',0.1,0.05);}
+function sfxError(){tone([120,90],0.2,'sawtooth',0.12);}
+function sfxClearLine(){[523,659,784].forEach((f,i)=>tone([f],0.2,'sine',0.2,i*0.08));}
+function sfxClearBox(){tone([523,659,784,1047],0.38,'sine',0.18);[1047,1319,1568,2093].forEach((f,i)=>tone([f],0.17,'sine',0.12,0.12+i*0.07));}
+function sfxCombo(n){const b=440+n*40;tone([b],0.06,'square',0.14);tone([b*2],0.09,'sine',0.16,0.04);}
+function sfxHold(){tone([320],0.06,'triangle',0.12);tone([480],0.06,'triangle',0.09,0.05);}
+function sfxHammer(){tone([80],0.14,'sawtooth',0.24);tone([160],0.08,'triangle',0.14,0.04);}
+function sfxGameOver(){[440,349,294,220].forEach((f,i)=>tone([f],0.28,'sine',0.18,i*0.18));}
 let settings={sfx:true,conflicts:true,pops:true,difficulty:'easy'};
 function loadSettings(){try{const s=JSON.parse(localStorage.getItem('sxb_s')||'{}');settings={...settings,...s};}catch(e){}applySettingsUI();}
 function applySettingsUI(){
@@ -2309,9 +2308,15 @@ document.addEventListener('keydown',e=>{
 loadSettings();
 loadVol();
 document.body.classList.add('zoo-mode');
-['pointerdown','touchstart','keydown'].forEach(evt=>{
-  document.addEventListener(evt,unlockAudio,{passive:true});
-});
+function handleFirstAudioUnlock(){
+  unlockAudio();
+  document.removeEventListener('pointerdown',handleFirstAudioUnlock);
+  document.removeEventListener('touchstart',handleFirstAudioUnlock);
+  document.removeEventListener('keydown',handleFirstAudioUnlock);
+}
+document.addEventListener('pointerdown',handleFirstAudioUnlock,{passive:true});
+document.addEventListener('touchstart',handleFirstAudioUnlock,{passive:true});
+document.addEventListener('keydown',handleFirstAudioUnlock);
 </script>
 
 </body>
