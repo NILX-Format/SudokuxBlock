@@ -1143,15 +1143,27 @@ bgmA.setAttribute('webkit-playsinline','');
 let currentBGM = bgmA;
 let bgmFadeTimer = null;
 let audioUnlocked = false;
+let bgmSourceNode = null;
+let bgmGainNode = null;
+
+function ensureBgmAudioGraph(){
+  if(!AC||bgmSourceNode||!currentBGM) return;
+  bgmSourceNode = AC.createMediaElementSource(currentBGM);
+  bgmGainNode = AC.createGain();
+  bgmGainNode.gain.value = 0;
+  bgmSourceNode.connect(bgmGainNode);
+  bgmGainNode.connect(AC.destination);
+}
 
 function unlockAudio(){
   rAC();
+  ensureBgmAudioGraph();
   if(audioUnlocked) return;
   audioUnlocked = true;
   const prevMuted = currentBGM.muted;
   const prevVol = currentBGM.volume;
-  currentBGM.muted = true;
-  currentBGM.volume = 0;
+  currentBGM.muted = false;
+  currentBGM.volume = 1;
   currentBGM.play()
     .then(()=>{
       currentBGM.pause();
@@ -1177,9 +1189,10 @@ function setBgmVolume(targetVol, pauseWhenSilent=false){
   if(!audio) return;
   stopBgmFade();
   const target = Math.max(0, Math.min(1, targetVol));
-  const start = Number.isFinite(audio.volume) ? audio.volume : 0;
+  const start = bgmGainNode ? bgmGainNode.gain.value : (Number.isFinite(audio.volume) ? audio.volume : 0);
   if(Math.abs(start - target) < 0.005){
-    audio.volume = target;
+    if(bgmGainNode) bgmGainNode.gain.value = target;
+    else audio.volume = target;
     if(pauseWhenSilent && target === 0) audio.pause();
     return;
   }
@@ -1190,10 +1203,13 @@ function setBgmVolume(targetVol, pauseWhenSilent=false){
   bgmFadeTimer = setInterval(()=>{
     step++;
     const progress = step / steps;
-    audio.volume = start + (target - start) * progress;
+    const next = start + (target - start) * progress;
+    if(bgmGainNode) bgmGainNode.gain.value = next;
+    else audio.volume = next;
     if(step >= steps){
       stopBgmFade();
-      audio.volume = target;
+      if(bgmGainNode) bgmGainNode.gain.value = target;
+      else audio.volume = target;
       if(pauseWhenSilent && target === 0) audio.pause();
     }
   }, stepMs);
@@ -1215,7 +1231,8 @@ function bgmPlay(){
   unlockAudio();
   stopBgmFade();
   currentBGM.muted = false;
-  currentBGM.volume = 0;
+  if(bgmGainNode) bgmGainNode.gain.value = 0;
+  else currentBGM.volume = 0;
   currentBGM.play().catch(()=>{});
   setBgmVolume(target, target === 0);
 }
