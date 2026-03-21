@@ -1531,7 +1531,8 @@ function renderBoard(){
   // FIX: show valid placements for active block
   if(activeIdx!==null&&hand[activeIdx]&&!hand[activeIdx].used)showValidCells(hand[activeIdx]);
   const filled=grid.flat().filter(v=>v).length;
-  document.getElementById('placedCount').textContent=`${filled}/81`;
+  const placedCountEl=$id('placedCount');
+  if(placedCountEl) placedCountEl.textContent=`${filled}/81`;
 }
 
 // Highlight all valid anchor cells for the active block
