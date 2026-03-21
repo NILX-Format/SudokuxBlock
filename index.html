@@ -1685,11 +1685,7 @@ function setHoldPreview(previewEl, cellSz){
     if(!holdBlock) return;
     e.preventDefault();
     const ghost=buildGhostFromBlock(holdBlock);
-    ghost.style.left=e.clientX+'px';
-    ghost.style.top=e.clientY+'px';
-    document.body.appendChild(ghost);
-    pdrag={blockIdx:'HOLD',ghostEl:ghost,ox:0,oy:0};
-    snapTarget=null;
+    startGhostDrag(ghost, 'HOLD', e.clientX, e.clientY);
     document.addEventListener('pointermove',onPMove,{passive:false});
     document.addEventListener('pointerup',onHoldDrop);
     document.addEventListener('pointercancel',onHoldDrop);
@@ -2177,19 +2173,24 @@ function getCellFromPoint(x,y){
 function getCsz(){if(_csz)return _csz;const cell=document.querySelector('.cell');if(!cell)return 48;const r=cell.getBoundingClientRect();return(_csz=(r.width+r.height)/2);}
 window.addEventListener('resize',()=>{_csz=0;});
 
-// Ghost drag: offset is always (0,0) so the ghost top-left tracks the pointer.
-// The snap anchor is wherever the pointer is on the board — no offset math needed.
+function startGhostDrag(ghost, blockIdx, x, y){
+  document.body.appendChild(ghost);
+  const rect=ghost.getBoundingClientRect();
+  const ox=rect.width/2;
+  const oy=rect.height+18;
+  ghost.style.left=(x-ox)+'px';
+  ghost.style.top=(y-oy)+'px';
+  pdrag={blockIdx,ghostEl:ghost,ox,oy};
+  snapTarget=null;
+}
+
+// Ghost drag: keep the whole block floating above the finger so it stays visible.
 function onPDown(e,idx){
   if(e.button!==undefined&&e.button!==0)return;
   e.preventDefault();
   rAC();
   const ghost=buildGhost(idx);
-  // Place ghost top-left exactly at pointer — clean, no offset
-  ghost.style.left=e.clientX+'px';
-  ghost.style.top=e.clientY+'px';
-  document.body.appendChild(ghost);
-  // ox/oy = 0: ghost top-left always follows the pointer
-  pdrag={blockIdx:idx,ghostEl:ghost,ox:0,oy:0};
+  startGhostDrag(ghost, idx, e.clientX, e.clientY);
   activeIdx=idx;snapTarget=null;
   renderTray();renderBoard();
   document.addEventListener('pointermove',onPMove,{passive:false});
