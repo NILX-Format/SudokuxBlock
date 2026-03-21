@@ -217,7 +217,8 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   transition: transform 0.05s;
 }
 #snap-ghost{position:fixed;pointer-events:none;z-index:8000;display:none;top:0;left:0;}
-.snap-ghost-cell{position:absolute;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:rgba(0,0,0,0.75);}
+.snap-ghost-cell{position:absolute;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:rgba(0,0,0,0.75);overflow:hidden;}
+.snap-ghost-cell svg{width:78%;height:78%;display:block;pointer-events:none;}
 .last-block-warn{font-size:0.56rem;color:var(--warn);letter-spacing:0.12em;animation:blink 0.8s infinite;text-align:center;margin-top:5px;min-height:1.1em;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
@@ -576,10 +577,19 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 /* ── VOLUME OVERLAY ── */
 .vol-row{padding:12px 0;border-bottom:1px solid var(--border);}
 .vol-row:last-of-type{border-bottom:none;}
+.vol-row.active{
+  background:rgba(40,212,255,0.08);
+  box-shadow:inset 0 0 0 1px rgba(40,212,255,0.24);
+  padding-left:10px;
+  padding-right:10px;
+  margin-left:-10px;
+  margin-right:-10px;
+  border-radius:10px;
+}
 .vol-label{display:block;font-size:0.6rem;color:var(--text);letter-spacing:0.08em;}
 .vol-desc{display:block;font-size:0.44rem;color:var(--muted2);margin-top:2px;margin-bottom:10px;}
 .vol-ctrl{display:flex;align-items:center;gap:8px;}
-.vol-pct{font-size:0.48rem;color:var(--muted2);width:36px;text-align:right;flex-shrink:0;}
+.vol-pct{font-family:'Bebas Neue',sans-serif;font-size:0.72rem;color:var(--accent2);width:48px;text-align:right;flex-shrink:0;line-height:1;}
 .vol-slider{flex:1;accent-color:var(--accent2);cursor:pointer;min-width:0;}
 .vol-mute-btn{background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:0.8rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s;flex-shrink:0;padding:0;}
 .vol-mute-btn:hover{border-color:var(--accent2);}
@@ -898,25 +908,25 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
     </div>
 
     <!-- SFX volume -->
-    <div class="vol-row">
-      <span class="vol-label">SFX</span>
+    <div class="vol-row" id="sfx-row">
+      <span class="vol-label" id="sfx-label">SFX</span>
       <span class="vol-desc">Effects, clears, combos</span>
       <div class="vol-ctrl">
         <span class="vol-pct" id="sfx-pct">100%</span>
         <input type="range" class="vol-slider" id="sfx-slider" min="0" max="100" value="100"
-          oninput="onVolChange('sfx', this.value)">
+          onpointerdown="setActiveVolumeControl('sfx')" oninput="onVolChange('sfx', this.value)" onchange="clearActiveVolumeControl()">
         <button class="vol-mute-btn" id="sfx-mute" onclick="toggleVolMute('sfx')">🔊</button>
       </div>
     </div>
 
     <!-- BGM volume -->
-    <div class="vol-row">
-      <span class="vol-label">BGM</span>
+    <div class="vol-row" id="bgm-row">
+      <span class="vol-label" id="bgm-label">BGM</span>
       <span class="vol-desc">Background music</span>
       <div class="vol-ctrl">
         <span class="vol-pct" id="bgm-pct">0%</span>
         <input type="range" class="vol-slider" id="bgm-slider" min="0" max="100" value="10"
-          oninput="onVolChange('bgm', this.value)">
+          onpointerdown="setActiveVolumeControl('bgm')" oninput="onVolChange('bgm', this.value)" onchange="clearActiveVolumeControl()">
         <button class="vol-mute-btn" id="bgm-mute" onclick="toggleVolMute('bgm')">🔇</button>
       </div>
     </div>
@@ -1051,17 +1061,35 @@ function toggleMute(){
 // ── Volume overlay ──
 function showVolume(){
   syncVolUI();
+  clearActiveVolumeControl();
   document.getElementById('volume-overlay').classList.add('show');
 }
-function hideVolume(){document.getElementById('volume-overlay').classList.remove('show');}
+function hideVolume(){clearActiveVolumeControl();document.getElementById('volume-overlay').classList.remove('show');}
 
 // Volume state
 let volState={sfx:1.0, bgm:0.1, sfxMuted:false, bgmMuted:false, _sfxBefore:1.0, _bgmBefore:0.1};
 let lastSfxPreviewAt=0;
+let activeVolumeControl=null;
 
 function isGameActive(){
   const gameScreen=document.getElementById('screen-game');
   return !!(gameScreen&&gameScreen.classList.contains('active'));
+}
+
+function setActiveVolumeControl(type){
+  activeVolumeControl=type;
+  ['sfx','bgm'].forEach(key=>{
+    const row=$id(key+'-row');
+    if(row) row.classList.toggle('active', key===type);
+  });
+}
+
+function clearActiveVolumeControl(){
+  activeVolumeControl=null;
+  ['sfx','bgm'].forEach(key=>{
+    const row=$id(key+'-row');
+    if(row) row.classList.remove('active');
+  });
 }
 
 function onVolChange(type, val){
@@ -1098,6 +1126,9 @@ function syncVolUI(){
   const sp=document.getElementById('sfx-pct'),bp=document.getElementById('bgm-pct');
   if(sp) sp.textContent=Math.round(volState.sfx*100)+'%';
   if(bp) bp.textContent=Math.round(volState.bgm*100)+'%';
+  const sl=$id('sfx-label'), bl=$id('bgm-label');
+  if(sl) sl.textContent=`SFX ${Math.round(volState.sfx*100)}%`;
+  if(bl) bl.textContent=`BGM ${Math.round(volState.bgm*100)}%`;
   const sm=document.getElementById('sfx-mute'),bm=document.getElementById('bgm-mute');
   if(sm) sm.textContent=volState.sfxMuted||volState.sfx===0?'🔇':'🔊';
   if(bm) bm.textContent=volState.bgmMuted||volState.bgm===0?'🔇':'🔊';
@@ -2119,7 +2150,10 @@ function updateSnap(idx,sr,sc){
     const div=document.createElement('div');div.className='snap-ghost-cell';
     const col=valid?block.color:'#ff2d55';
     div.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background:${col};opacity:${valid?0.65:0.28};border:2px solid ${col};`;
-    div.textContent=val;g.appendChild(div);
+    const disp=getCellDisplay(val);
+    if(disp.type==='svg') div.innerHTML=disp.html;
+    else div.textContent=disp.text;
+    g.appendChild(div);
   });
   // Also update drop-valid / drop-invalid classes
   clearHL();
@@ -2216,7 +2250,10 @@ function updateSnapFromBlock(block,sr,sc){
     const div=document.createElement('div');div.className='snap-ghost-cell';
     const col=valid?block.color:'#ff2d55';
     div.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background:${col};opacity:${valid?0.65:0.28};border:2px solid ${col};`;
-    div.textContent=val;g.appendChild(div);
+    const disp=getCellDisplay(val);
+    if(disp.type==='svg') div.innerHTML=disp.html;
+    else div.textContent=disp.text;
+    g.appendChild(div);
   });
   clearHL();
   block.cells.forEach(([dr,dc])=>{
