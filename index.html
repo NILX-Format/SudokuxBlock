@@ -224,9 +224,6 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   display: none;
   transition: transform 0.05s;
 }
-#snap-ghost{position:fixed;pointer-events:none;z-index:8000;display:none;top:0;left:0;}
-.snap-ghost-cell{position:absolute;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:rgba(0,0,0,0.75);overflow:hidden;}
-.snap-ghost-cell svg{width:78%;height:78%;display:block;pointer-events:none;}
 .last-block-warn{font-size:0.56rem;color:var(--warn);letter-spacing:0.12em;animation:blink 0.8s infinite;text-align:center;margin-top:5px;min-height:1.1em;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
@@ -819,7 +816,6 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 
       <div class="board-container" id="boardContainer">
         <div id="board"></div>
-        <div id="snap-ghost"></div>
       </div>
       <div class="last-block-warn" id="lastWarn"></div>
 
@@ -1479,11 +1475,16 @@ let drag={
   state:DragState.IDLE,
   block:null,
   ghost:null,
+  preview:null,
   sourceIdx:null,
   anchorOffsetX:0,
   anchorOffsetY:0,
+  dragLift:0,
+  lift:0,
   ghostX:0,
   ghostY:0,
+  previewX:0,
+  previewY:0,
   gridX:null,
   gridY:null,
 };
@@ -1559,7 +1560,8 @@ function newGame(){
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoUsed=0;_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
-  drag={state:DragState.IDLE,block:null,ghost:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,ghostX:0,ghostY:0,gridX:null,gridY:null};
+  if(drag.preview) drag.preview.remove();
+  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
   clearSnap();_csz=0;fillHand();renderAll();
 }
 
@@ -1709,7 +1711,7 @@ function setHoldPreview(previewEl, cellSz){
     if(!holdBlock) return;
     if(drag.state!==DragState.IDLE) return;
     e.preventDefault();
-    const ghost=buildGhostFromBlock(holdBlock);
+    const ghost=createGhost(holdBlock);
     startGhostDrag(ghost, holdBlock, 'HOLD', e.clientX, e.clientY);
     document.addEventListener('pointermove',onPMove,{passive:false});
     document.addEventListener('pointerup',onHoldDrop);
@@ -1732,7 +1734,7 @@ function renderHold(){
   setHoldPreview($id('holdPreviewDesktop'), 22);
 }
 
-function buildGhostFromBlock(block){
+function buildGhostFromBlock(block,opts={}){
   const cells=block.cells;
   const mr=Math.max(...cells.map(([r])=>r));
   const mc=Math.max(...cells.map(([,c])=>c));
@@ -1740,7 +1742,14 @@ function buildGhostFromBlock(block){
   const br=boardEl?boardEl.getBoundingClientRect():null;
   const cs=br?Math.floor((br.width-3-8)/9):44;
   const wrap=document.createElement('div');
-  wrap.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:0.82;display:grid;gap:1px;grid-template-columns:repeat(${mc+1},${cs}px);grid-template-rows:repeat(${mr+1},${cs}px);`;
+  const {
+    zIndex=9999,
+    opacity=0.9,
+    scale=1,
+    shadow='0 12px 30px rgba(0,0,0,0.4)',
+    filter='none'
+  }=opts;
+  wrap.style.cssText=`position:fixed;pointer-events:none;z-index:${zIndex};opacity:${opacity};display:grid;gap:1px;grid-template-columns:repeat(${mc+1},${cs}px);grid-template-rows:repeat(${mr+1},${cs}px);transform:scale(${scale});transform-origin:top left;filter:${filter};`;
   for(let r=0;r<=mr;r++) for(let c=0;c<=mc;c++){
     const gc=document.createElement('div');
     const m=cells.find(([cr,cc])=>cr===r&&cc===c);
@@ -1748,16 +1757,24 @@ function buildGhostFromBlock(block){
       const disp=getCellDisplay(m[2]);
       const bg=block.color, bdr=getBlockBorder(block.tier);
       if(disp.type==='svg'){
-        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:3px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
+        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:3px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;box-shadow:${shadow};`;
         gc.innerHTML=disp.html;
       } else {
-        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:2px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:${Math.round(cs*0.7)}px;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
+        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:2px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:${Math.round(cs*0.7)}px;color:#fff;box-shadow:${shadow};`;
         gc.textContent=disp.text;
       }
     } else { gc.style.cssText=`width:${cs}px;height:${cs}px;`; }
     wrap.appendChild(gc);
   }
   return wrap;
+}
+
+function createGhost(block){
+  return buildGhostFromBlock(block,{zIndex:9999,opacity:0.9,scale:1.05,shadow:'0 12px 30px rgba(0,0,0,0.4)',filter:'none'});
+}
+
+function createPreview(block){
+  return buildGhostFromBlock(block,{zIndex:9998,opacity:0.25,scale:1,shadow:'none',filter:'brightness(1.3)'});
 }
 
 function onHoldDrop(e){
@@ -2161,65 +2178,41 @@ function triggerGameOver(){
 function clearHL(){document.querySelectorAll('.cell.drop-valid,.cell.drop-invalid,.cell.can-place').forEach(c=>c.classList.remove('drop-valid','drop-invalid','can-place'));}
 function getCell(r,c){return document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);}
 
-function updateSnap(idx,sr,sc){
-  const g=document.getElementById('snap-ghost');if(sr==null){g.style.display='none';return;}
-  const block=hand[idx];if(!block)return;const valid=canPlace(block,sr,sc);
-  g.innerHTML='';g.style.display='block';
-  block.cells.forEach(([dr,dc,val])=>{
-    const r=sr+dr,c=sc+dc;if(r<0||r>8||c<0||c>8)return;
-    const cell=getCell(r,c);if(!cell)return;const rect=cell.getBoundingClientRect();
-    const div=document.createElement('div');div.className='snap-ghost-cell';
-    const col=valid?block.color:'#ff2d55';
-    div.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background:${col};opacity:${valid?0.65:0.28};border:2px solid ${col};`;
-    const disp=getCellDisplay(val);
-    if(disp.type==='svg') div.innerHTML=disp.html;
-    else div.textContent=disp.text;
-    g.appendChild(div);
-  });
-  // Also update drop-valid / drop-invalid classes
-  clearHL();
-  block.cells.forEach(([dr,dc])=>{
-    const cell=getCell(sr+dr,sc+dc);
-    if(cell)cell.classList.add(valid?'drop-valid':'drop-invalid');
-  });
-}
 function clearSnap(){
-  const g=document.getElementById('snap-ghost');
-  if(g){g.style.display='none';g.innerHTML='';}
+  if(drag.preview) drag.preview.style.display='none';
   drag.gridX=null;
   drag.gridY=null;
-}
-
-// FIX: use elementFromPoint instead of distance-based snapping
-function getCellFromPoint(x,y){
-  // Hide ghost temporarily so it doesn't intercept
-  const g=document.getElementById('snap-ghost');const prev=g.style.display;g.style.display='none';
-  const el=document.elementFromPoint(x,y);g.style.display=prev;
-  if(!el)return null;
-  const cell=el.closest('.cell')||(el.classList&&el.classList.contains('cell')?el:null);
-  if(!cell)return null;
-  return{r:+cell.dataset.row,c:+cell.dataset.col};
 }
 function getCsz(){if(_csz)return _csz;const cell=document.querySelector('.cell');if(!cell)return 48;const r=cell.getBoundingClientRect();return(_csz=(r.width+r.height)/2);}
 window.addEventListener('resize',()=>{_csz=0;});
 
 function startGhostDrag(ghost, block, sourceIdx, x, y){
+  const preview=createPreview(block);
   document.body.appendChild(ghost);
+  document.body.appendChild(preview);
   const rect=ghost.getBoundingClientRect();
   const ox=rect.width/2;
-  const lift=40;
+  const lift=36;
+  const dragLift=18;
   const oy=rect.height;
   ghost.style.left=(x-ox)+'px';
   ghost.style.top=(y-oy-lift)+'px';
+  preview.style.left=(x-ox)+'px';
+  preview.style.top=(y-oy-lift)+'px';
   drag={
     state:DragState.PICKED,
     block,
     ghost,
+    preview,
     sourceIdx,
     anchorOffsetX:ox,
     anchorOffsetY:oy,
+    dragLift,
+    lift,
     ghostX:x-ox,
     ghostY:y-oy-lift,
+    previewX:x-ox,
+    previewY:y-oy-lift,
     gridX:null,
     gridY:null,
   };
@@ -2227,15 +2220,21 @@ function startGhostDrag(ghost, block, sourceIdx, x, y){
 
 function cleanupDrag(){
   if(drag.ghost) drag.ghost.remove();
+  if(drag.preview) drag.preview.remove();
   drag={
     state:DragState.IDLE,
     block:null,
     ghost:null,
+    preview:null,
     sourceIdx:null,
     anchorOffsetX:0,
     anchorOffsetY:0,
+    dragLift:0,
+    lift:0,
     ghostX:0,
     ghostY:0,
+    previewX:0,
+    previewY:0,
     gridX:null,
     gridY:null,
   };
@@ -2251,7 +2250,7 @@ function onPDown(e,idx){
   rAC();
   const block=hand[idx];
   if(!block)return;
-  const ghost=buildGhost(idx);
+  const ghost=createGhost(block);
   startGhostDrag(ghost, block, idx, e.clientX, e.clientY);
   activeIdx=idx;
   renderTray();renderBoard();
@@ -2273,12 +2272,13 @@ function getActiveHoldArea(){
 function onPMove(e){
   e.preventDefault();if(drag.state===DragState.IDLE||!drag.ghost)return;
   drag.state=DragState.DRAGGING;
+  const board=document.getElementById('board');
+  const br=board?board.getBoundingClientRect():null;
+  const cell=getCsz();
   const targetX=e.clientX-drag.anchorOffsetX;
-  const targetY=e.clientY-drag.anchorOffsetY;
+  const targetY=e.clientY-drag.anchorOffsetY-drag.dragLift;
   drag.ghostX+=(targetX-drag.ghostX)*0.35;
   drag.ghostY+=(targetY-drag.ghostY)*0.35;
-  drag.ghost.style.left=drag.ghostX+'px';
-  drag.ghost.style.top=drag.ghostY+'px';
 
   // Highlight hold area when dragging a hand block over it
   if(drag.sourceIdx!=='HOLD'){
@@ -2289,46 +2289,40 @@ function onPMove(e){
       // Clear other hold area highlight
       [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
       holdArea.classList.toggle('drag-over', over);
-      if(over){clearSnap();clearHL();return;}
+      if(over){
+        clearSnap();
+        clearHL();
+        drag.ghost.style.left=drag.ghostX+'px';
+        drag.ghost.style.top=drag.ghostY+'px';
+        return;
+      }
     }
   }
 
-  const snap=getCellFromPoint(e.clientX,e.clientY);
-  if(snap){
-    if(drag.gridY!==snap.r||drag.gridX!==snap.c){
-      drag.gridY=snap.r;
-      drag.gridX=snap.c;
-      if(drag.sourceIdx==='HOLD') updateSnapFromBlock(holdBlock,snap.r,snap.c);
-      else updateSnap(drag.sourceIdx,snap.r,snap.c);
+  if(br){
+    const gx=Math.round((drag.ghostX-br.left)/cell);
+    const gy=Math.round((drag.ghostY-br.top)/cell);
+    drag.gridX=gx;
+    drag.gridY=gy;
+    const snapX=br.left+gx*cell;
+    const snapY=br.top+gy*cell;
+    drag.previewX=snapX;
+    drag.previewY=snapY;
+    if(drag.preview){
+      drag.preview.style.display='grid';
+      drag.preview.style.left=snapX+'px';
+      drag.preview.style.top=snapY+'px';
+      const valid=canPlace(drag.block,gy,gx);
+      drag.preview.style.opacity=valid?'0.25':'0.16';
+      drag.preview.style.filter=valid?'brightness(1.3)':'grayscale(0.2) brightness(0.8)';
     }
-  }else{
+    drag.ghostX+=(snapX-drag.ghostX)*0.2;
+    drag.ghostY+=(snapY-drag.ghostY)*0.2;
+  } else {
     clearSnap();clearHL();
-    if(activeIdx!==null&&drag.sourceIdx!=='HOLD')showValidCells(hand[activeIdx]);
   }
-}
-
-function updateSnapFromBlock(block,sr,sc){
-  if(!block)return;
-  const g=document.getElementById('snap-ghost');
-  const valid=canPlace(block,sr,sc);
-  g.innerHTML='';g.style.display='block';
-  block.cells.forEach(([dr,dc,val])=>{
-    const r=sr+dr,c=sc+dc;if(r<0||r>8||c<0||c>8)return;
-    const cell=getCell(r,c);if(!cell)return;
-    const rect=cell.getBoundingClientRect();
-    const div=document.createElement('div');div.className='snap-ghost-cell';
-    const col=valid?block.color:'#ff2d55';
-    div.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;background:${col};opacity:${valid?0.65:0.28};border:2px solid ${col};`;
-    const disp=getCellDisplay(val);
-    if(disp.type==='svg') div.innerHTML=disp.html;
-    else div.textContent=disp.text;
-    g.appendChild(div);
-  });
-  clearHL();
-  block.cells.forEach(([dr,dc])=>{
-    const cell=getCell(sr+dr,sc+dc);
-    if(cell)cell.classList.add(valid?'drop-valid':'drop-invalid');
-  });
+  drag.ghost.style.left=drag.ghostX+'px';
+  drag.ghost.style.top=drag.ghostY+'px';
 }
 
 function onPUp(e){
@@ -2355,31 +2349,6 @@ function onPUp(e){
   }
 
   if(drop) tryPlace(di, drop.r, drop.c);
-}
-
-function buildGhost(idx){
-  const block=hand[idx];if(!block)return document.createElement('div');
-  const cells=block.cells,mr=Math.max(...cells.map(([r])=>r)),mc=Math.max(...cells.map(([,c])=>c));
-  const boardEl=document.getElementById('board'),br=boardEl?boardEl.getBoundingClientRect():null;
-  const cs=br?Math.floor((br.width-3-8)/9):44;
-  const wrap=document.createElement('div');
-  wrap.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:0.82;display:grid;gap:1px;grid-template-columns:repeat(${mc+1},${cs}px);grid-template-rows:repeat(${mr+1},${cs}px);`;
-  for(let r=0;r<=mr;r++)for(let c=0;c<=mc;c++){
-    const gc=document.createElement('div');const m=cells.find(([cr,cc])=>cr===r&&cc===c);
-    if(m){
-      const disp=getCellDisplay(m[2]);
-      const bg=block.color;
-      const bdr=getBlockBorder(block.tier);
-      if(disp.type==='svg'){
-        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:3px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
-        gc.innerHTML=disp.html;
-      } else {
-        gc.style.cssText=`width:${cs}px;height:${cs}px;border-radius:2px;background:${bg};border:2px solid ${bdr};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:${Math.round(cs*0.7)}px;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
-        gc.textContent=disp.text;
-      }
-    }else gc.style.cssText=`width:${cs}px;height:${cs}px;`;
-    wrap.appendChild(gc);
-  }return wrap;
 }
 
 // ── Score pop ──
