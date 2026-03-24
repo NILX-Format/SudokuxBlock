@@ -28,6 +28,14 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow-x:hidden;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px);}
+html{
+  -webkit-tap-highlight-color: transparent;
+}
+body, button, input, .tray-slot, .hold-preview, .hold-slot, #board, .cell{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 /* ── SCREENS ── */
 .screen{display:none;min-height:100vh;flex-direction:column;align-items:center;}
