@@ -1466,7 +1466,20 @@ let tokens=0,hammers=2,activeIdx=null;
 let undoStack=[],undoUsed=0;
 const MAX_UNDO=3;
 let hammerMode=false,_placedBlocks=[];
-let pdrag=null,snapTarget=null,_csz=0;
+const DragState={IDLE:0,PICKED:1,DRAGGING:2};
+let drag={
+  state:DragState.IDLE,
+  block:null,
+  ghost:null,
+  sourceIdx:null,
+  anchorOffsetX:0,
+  anchorOffsetY:0,
+  ghostX:0,
+  ghostY:0,
+  gridX:null,
+  gridY:null,
+};
+let _csz=0;
 
 // ══════════════════════════════════════════════════════
 // BLOCK GENERATION
@@ -1537,7 +1550,8 @@ function newGame(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoUsed=0;_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
-  if(pdrag){pdrag.ghostEl.remove();pdrag=null;}
+  if(drag.ghost) drag.ghost.remove();
+  drag={state:DragState.IDLE,block:null,ghost:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,ghostX:0,ghostY:0,gridX:null,gridY:null};
   clearSnap();_csz=0;fillHand();renderAll();
 }
 
@@ -1595,7 +1609,7 @@ function renderTray(){
   const tray=document.getElementById('tray');tray.innerHTML='';
   hand.forEach((block,i)=>{
     if(!block||block.used)return;
-    const draggingOrigin=pdrag&&pdrag.blockIdx===i;
+    const draggingOrigin=drag.state!==DragState.IDLE&&drag.sourceIdx===i;
     const slot=document.createElement('div');slot.className='tray-slot'+(activeIdx===i?' active':'')+(draggingOrigin?' dragging-origin':'');
     slot.addEventListener('click',()=>selBlock(i));
     slot.addEventListener('pointerdown',e=>onPDown(e,i));
@@ -1685,9 +1699,10 @@ function setHoldPreview(previewEl, cellSz){
   if(mini) previewEl.appendChild(mini);
   previewEl.onpointerdown = e => {
     if(!holdBlock) return;
+    if(drag.state!==DragState.IDLE) return;
     e.preventDefault();
     const ghost=buildGhostFromBlock(holdBlock);
-    startGhostDrag(ghost, 'HOLD', e.clientX, e.clientY);
+    startGhostDrag(ghost, holdBlock, 'HOLD', e.clientX, e.clientY);
     document.addEventListener('pointermove',onPMove,{passive:false});
     document.addEventListener('pointerup',onHoldDrop);
     document.addEventListener('pointercancel',onHoldDrop);
@@ -1741,9 +1756,9 @@ function onHoldDrop(e){
   document.removeEventListener('pointermove',onPMove);
   document.removeEventListener('pointerup',onHoldDrop);
   document.removeEventListener('pointercancel',onHoldDrop);
-  if(!pdrag) return;
-  const drop=snapTarget;
-  pdrag.ghostEl.remove(); pdrag=null; clearSnap(); clearHL();
+  if(drag.state===DragState.IDLE) return;
+  const drop=(drag.gridY!=null&&drag.gridX!=null)?{r:drag.gridY,c:drag.gridX}:null;
+  cleanupDrag();
   if(drop) placeHoldBlock(drop.r, drop.c);
 }
 
@@ -1932,7 +1947,7 @@ document.addEventListener('mousemove', e=>{
 });
 
 function onCellClick(e){
-  if(pdrag)return;
+  if(drag.state!==DragState.IDLE)return;
   const r=+e.currentTarget.dataset.row,c=+e.currentTarget.dataset.col;
   if(hammerMode){
     if(grid[r][c]!==0){
@@ -2160,7 +2175,12 @@ function updateSnap(idx,sr,sc){
     if(cell)cell.classList.add(valid?'drop-valid':'drop-invalid');
   });
 }
-function clearSnap(){const g=document.getElementById('snap-ghost');if(g){g.style.display='none';g.innerHTML='';}snapTarget=null;}
+function clearSnap(){
+  const g=document.getElementById('snap-ghost');
+  if(g){g.style.display='none';g.innerHTML='';}
+  drag.gridX=null;
+  drag.gridY=null;
+}
 
 // FIX: use elementFromPoint instead of distance-based snapping
 function getCellFromPoint(x,y){
@@ -2175,26 +2195,57 @@ function getCellFromPoint(x,y){
 function getCsz(){if(_csz)return _csz;const cell=document.querySelector('.cell');if(!cell)return 48;const r=cell.getBoundingClientRect();return(_csz=(r.width+r.height)/2);}
 window.addEventListener('resize',()=>{_csz=0;});
 
-function startGhostDrag(ghost, blockIdx, x, y){
+function startGhostDrag(ghost, block, sourceIdx, x, y){
   document.body.appendChild(ghost);
   const rect=ghost.getBoundingClientRect();
   const ox=rect.width/2;
-  const lift=12;
-  const oy=Math.max(rect.height*0.82, 36);
+  const lift=40;
+  const oy=rect.height;
   ghost.style.left=(x-ox)+'px';
   ghost.style.top=(y-oy-lift)+'px';
-  pdrag={blockIdx,ghostEl:ghost,ox,oy};
-  snapTarget=null;
+  drag={
+    state:DragState.PICKED,
+    block,
+    ghost,
+    sourceIdx,
+    anchorOffsetX:ox,
+    anchorOffsetY:oy,
+    ghostX:x-ox,
+    ghostY:y-oy-lift,
+    gridX:null,
+    gridY:null,
+  };
+}
+
+function cleanupDrag(){
+  if(drag.ghost) drag.ghost.remove();
+  drag={
+    state:DragState.IDLE,
+    block:null,
+    ghost:null,
+    sourceIdx:null,
+    anchorOffsetX:0,
+    anchorOffsetY:0,
+    ghostX:0,
+    ghostY:0,
+    gridX:null,
+    gridY:null,
+  };
+  clearSnap();
+  clearHL();
 }
 
 // Ghost drag: keep the whole block floating above the finger so it stays visible.
 function onPDown(e,idx){
   if(e.button!==undefined&&e.button!==0)return;
+  if(drag.state!==DragState.IDLE)return;
   e.preventDefault();
   rAC();
+  const block=hand[idx];
+  if(!block)return;
   const ghost=buildGhost(idx);
-  startGhostDrag(ghost, idx, e.clientX, e.clientY);
-  activeIdx=idx;snapTarget=null;
+  startGhostDrag(ghost, block, idx, e.clientX, e.clientY);
+  activeIdx=idx;
   renderTray();renderBoard();
   document.addEventListener('pointermove',onPMove,{passive:false});
   document.addEventListener('pointerup',onPUp);
@@ -2212,12 +2263,17 @@ function getActiveHoldArea(){
 }
 
 function onPMove(e){
-  e.preventDefault();if(!pdrag)return;
-  pdrag.ghostEl.style.left=(e.clientX-pdrag.ox)+'px';
-  pdrag.ghostEl.style.top=(e.clientY-pdrag.oy)+'px';
+  e.preventDefault();if(drag.state===DragState.IDLE||!drag.ghost)return;
+  drag.state=DragState.DRAGGING;
+  const targetX=e.clientX-drag.anchorOffsetX;
+  const targetY=e.clientY-drag.anchorOffsetY;
+  drag.ghostX+=(targetX-drag.ghostX)*0.35;
+  drag.ghostY+=(targetY-drag.ghostY)*0.35;
+  drag.ghost.style.left=drag.ghostX+'px';
+  drag.ghost.style.top=drag.ghostY+'px';
 
   // Highlight hold area when dragging a hand block over it
-  if(pdrag.blockIdx!=='HOLD'){
+  if(drag.sourceIdx!=='HOLD'){
     const holdArea=getActiveHoldArea();
     if(holdArea){
       const hr=holdArea.getBoundingClientRect();
@@ -2231,14 +2287,15 @@ function onPMove(e){
 
   const snap=getCellFromPoint(e.clientX,e.clientY);
   if(snap){
-    if(!snapTarget||snapTarget.r!==snap.r||snapTarget.c!==snap.c){
-      snapTarget=snap;
-      if(pdrag.blockIdx==='HOLD') updateSnapFromBlock(holdBlock,snap.r,snap.c);
-      else updateSnap(pdrag.blockIdx,snap.r,snap.c);
+    if(drag.gridY!==snap.r||drag.gridX!==snap.c){
+      drag.gridY=snap.r;
+      drag.gridX=snap.c;
+      if(drag.sourceIdx==='HOLD') updateSnapFromBlock(holdBlock,snap.r,snap.c);
+      else updateSnap(drag.sourceIdx,snap.r,snap.c);
     }
   }else{
     clearSnap();clearHL();
-    if(activeIdx!==null&&pdrag.blockIdx!=='HOLD')showValidCells(hand[activeIdx]);
+    if(activeIdx!==null&&drag.sourceIdx!=='HOLD')showValidCells(hand[activeIdx]);
   }
 }
 
@@ -2270,13 +2327,14 @@ function onPUp(e){
   document.removeEventListener('pointermove',onPMove);
   document.removeEventListener('pointerup',onPUp);
   document.removeEventListener('pointercancel',onPUp);
-  if(!pdrag)return;
+  if(drag.state===DragState.IDLE)return;
 
   // Clear hold drag-over highlight on both
   [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
 
-  const drop=snapTarget, di=pdrag.blockIdx;
-  pdrag.ghostEl.remove(); pdrag=null; clearSnap(); clearHL();
+  const di=drag.sourceIdx;
+  const drop=(drag.gridY!=null&&drag.gridX!=null)?{r:drag.gridY,c:drag.gridX}:null;
+  cleanupDrag();
 
   // Check if dropped on any visible hold area (from hand)
   if(di!=='HOLD'){
