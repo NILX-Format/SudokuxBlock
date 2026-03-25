@@ -99,6 +99,9 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 .menu-btn.primary::before{background:var(--accent2);}
 .menu-btn.primary:hover{background:var(--glb);}
 .menu-btn .bi{margin-right:10px;opacity:0.65;}
+.menu-btn.tutorial{border-color:var(--warn);color:var(--warn);}
+.menu-btn.tutorial::before{background:var(--warn);}
+.menu-btn.tutorial:hover{background:rgba(255,200,0,0.08);}
 .menu-ver{position:fixed;bottom:18px;font-size:0.46rem;color:var(--muted);letter-spacing:0.18em;}
 
 /* ══════════ SETTINGS ══════════ */
@@ -233,6 +236,60 @@ body.combo-screen-flash::before{
 .cell.conflict{color:var(--danger)!important;background:rgba(255,45,85,0.09)!important;}
 .cell.drop-valid{background:rgba(40,212,255,0.13);outline:1.5px solid var(--accent2);}
 .cell.drop-invalid{background:rgba(255,45,85,0.11);outline:1.5px solid var(--danger);}
+.cell.tutorial-target{
+  box-shadow:inset 0 0 0 2px var(--warn),0 0 18px rgba(255,200,0,0.28);
+  animation:tutorialPulse 1s ease-in-out infinite;
+}
+.cell.tutorial-row{
+  background:rgba(255,200,0,0.08);
+}
+.cell.tutorial-box{
+  background:rgba(40,212,255,0.08);
+  box-shadow:inset 0 0 0 1px rgba(40,212,255,0.22);
+}
+.cell.tutorial-zone{
+  background:rgba(255,45,85,0.12);
+  box-shadow:inset 0 0 0 1px rgba(255,45,85,0.28);
+}
+.cell.tutorial-last{
+  box-shadow:inset 0 0 0 2px var(--warn),0 0 20px rgba(255,200,0,0.36)!important;
+  background:rgba(255,200,0,0.1)!important;
+}
+@keyframes tutorialPulse{
+  0%,100%{transform:scale(1);filter:brightness(1);}
+  50%{transform:scale(1.04);filter:brightness(1.2);}
+}
+.mob-tool.tutorial-target,.tool-item.tutorial-target{
+  border-color:var(--warn)!important;
+  box-shadow:0 0 0 1px rgba(255,200,0,0.28),0 0 18px rgba(255,200,0,0.14);
+}
+.tutorial-hint{
+  margin-top:10px;
+  min-height:32px;
+  padding:8px 12px;
+  border:1px solid var(--warn);
+  background:rgba(255,200,0,0.08);
+  color:var(--warn);
+  font-size:0.54rem;
+  letter-spacing:0.04em;
+  text-align:center;
+  display:none;
+}
+.tutorial-hint.show{display:block;}
+.tutorial-progress{
+  margin-top:8px;
+  min-height:22px;
+  padding:4px 10px;
+  border:1px solid rgba(40,212,255,0.5);
+  background:rgba(40,212,255,0.1);
+  color:var(--accent2);
+  font-size:0.46rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  text-align:center;
+  display:none;
+}
+.tutorial-progress.show{display:block;}
 
 /* ── HAMMER MODE ── */
 /* Board cursor when hammer is active */
@@ -714,6 +771,7 @@ body.combo-screen-flash::before{
     </div>
     <div class="menu-btns">
       <button class="menu-btn primary" onclick="goPlay()"><span class="bi">▶</span>Play</button>
+      <button class="menu-btn tutorial" onclick="startTutorial()"><span class="bi">✦</span>Tutorial</button>
       <button class="menu-btn" onclick="goScreen('screen-leaderboard');renderLB('all')"><span class="bi">🏆</span>Leaderboard</button>
       <button class="menu-btn" onclick="goScreen('screen-settings')"><span class="bi">⚙</span>Settings</button>
     </div>
@@ -878,6 +936,8 @@ body.combo-screen-flash::before{
         <div id="board"></div>
       </div>
       <div class="last-block-warn" id="lastWarn"></div>
+      <div class="tutorial-progress" id="tutorialProgress"></div>
+      <div class="tutorial-hint" id="tutorialHint"></div>
 
     </div>
     <div class="right-panel">
@@ -1086,6 +1146,268 @@ function restartGame(){document.getElementById('go-overlay').classList.remove('s
 function showLBFromGame(){document.getElementById('go-overlay').classList.remove('show');renderLB('all');goScreen('screen-leaderboard');}
 function showHelp(){document.getElementById('help-overlay').classList.add('show');}
 function hideHelp(){document.getElementById('help-overlay').classList.remove('show');}
+
+function resetTutorialState(){
+  tutorial={active:false,phase:-1,step:0,target:null,targets:[],highlightRows:[],highlightBox:null,highlightRect:null,lockedTool:null,needsUndo:false,pendingEnd:false};
+  const hint=$id('tutorialHint');
+  if(hint){hint.textContent='';hint.classList.remove('show');}
+  const progress=$id('tutorialProgress');
+  if(progress){progress.textContent='';progress.classList.remove('show');}
+}
+function getTutorialProgressText(){
+  const phaseMap={
+    0:1,
+    1:2,
+    2:3,
+    2.5:4,
+    3:5,
+    4:6,
+    999:7,
+  };
+  const stepNum=phaseMap[tutorial.phase];
+  if(!stepNum) return '';
+  return `Tutorial Phase ${stepNum}/7`;
+}
+function updateTutorialProgress(){
+  const progress=$id('tutorialProgress');
+  if(!progress) return;
+  if(!tutorial.active){
+    progress.textContent='';
+    progress.classList.remove('show');
+    return;
+  }
+  const text=getTutorialProgressText();
+  progress.textContent=text;
+  progress.classList.toggle('show',!!text);
+}
+function showHint(text){
+  const hint=$id('tutorialHint');
+  if(!hint) return;
+  hint.textContent=text;
+  hint.classList.toggle('show',!!text);
+}
+function genTutorialBlock(cells){
+  return{name:'Tutorial',tier:1,color:getBlockColor(1),cells,used:false,_tutorial:true};
+}
+function clearTutorialHighlights(){
+  document.querySelectorAll('.cell.tutorial-target,.cell.tutorial-row,.cell.tutorial-box,.cell.tutorial-zone,.cell.tutorial-last').forEach(el=>el.classList.remove('tutorial-target','tutorial-row','tutorial-box','tutorial-zone','tutorial-last'));
+  [$id('hammerTool'),$id('hammerToolDesktop'),$id('holdArea'),$id('holdAreaDesktop')].forEach(el=>{if(el)el.classList.remove('tutorial-target');});
+}
+function applyTutorialHighlights(){
+  if(!tutorial.active) return;
+  clearTutorialHighlights();
+  tutorial.highlightRows.forEach(r=>{
+    for(let c=0;c<9;c++){
+      const cell=getCell(r,c);
+      if(cell) cell.classList.add('tutorial-row');
+    }
+  });
+  if(tutorial.highlightBox){
+    const {br,bc}=tutorial.highlightBox;
+    for(let dr=0;dr<3;dr++)for(let dc=0;dc<3;dc++){
+      const cell=getCell(br*3+dr,bc*3+dc);
+      if(cell) cell.classList.add('tutorial-box');
+    }
+  }
+  if(tutorial.highlightRect){
+    const {r0,c0,r1,c1}=tutorial.highlightRect;
+    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+      const cell=getCell(r,c);
+      if(cell) cell.classList.add('tutorial-zone');
+    }
+  }
+  if(tutorial.target){
+    const cell=getCell(tutorial.target.r,tutorial.target.c);
+    if(cell) cell.classList.add('tutorial-target');
+  }
+  if(tutorial.phase===2.5&&tutorial.target){
+    const cell=getCell(tutorial.target.r,tutorial.target.c);
+    if(cell) cell.classList.add('tutorial-last');
+  }
+  if(tutorial.lockedTool==='hammer'){
+    [$id('hammerTool'),$id('hammerToolDesktop')].forEach(el=>{if(el)el.classList.add('tutorial-target');});
+  }
+  if(tutorial.lockedTool==='hold'){
+    [$id('holdArea'),$id('holdAreaDesktop')].forEach(el=>{if(el)el.classList.add('tutorial-target');});
+  }
+}
+function highlightCell(r,c){
+  tutorial.target={r,c};
+  tutorial.highlightRows=[];
+  tutorial.highlightBox=null;
+  tutorial.highlightRect=null;
+  applyTutorialHighlights();
+}
+function highlightRow(r){
+  tutorial.highlightRows=[r];
+  tutorial.target=null;
+  tutorial.highlightBox=null;
+  tutorial.highlightRect=null;
+  applyTutorialHighlights();
+}
+function highlightBox(br,bc){
+  tutorial.highlightBox={br,bc};
+  tutorial.highlightRows=[];
+  tutorial.target=null;
+  tutorial.highlightRect=null;
+  applyTutorialHighlights();
+}
+function highlightRect(r0,c0,r1,c1){
+  tutorial.highlightRect={r0,c0,r1,c1};
+  applyTutorialHighlights();
+}
+function highlightTool(name){
+  tutorial.lockedTool=name;
+  applyTutorialHighlights();
+}
+function clearTutorialFocus(){
+  tutorial.target=null;
+  tutorial.highlightRows=[];
+  tutorial.highlightBox=null;
+  tutorial.highlightRect=null;
+  tutorial.lockedTool=null;
+  applyTutorialHighlights();
+}
+function isTutorialLocked(){
+  return tutorial.active&&tutorial.phase<5;
+}
+function setupTutorialState(){
+  grid=Array.from({length:9},()=>Array(9).fill(0));
+  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoUsed=0;_placedBlocks=[];
+  score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
+  if(drag.ghost) drag.ghost.remove();
+  if(drag.preview) drag.preview.remove();
+  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  clearSnap();_csz=0;
+}
+function phase0Setup(){
+  tutorial.phase=0;
+  tutorial.step=0;
+  setupTutorialState();
+  hand=[genTutorialBlock([[0,0,1]])];
+  tutorial.target={r:4,c:4};
+  updateTutorialProgress();
+  showHint('把方块放到高亮位置');
+  renderAll();
+  applyTutorialHighlights();
+}
+function phase1Setup(){
+  tutorial.phase=1;
+  tutorial.step=0;
+  setupTutorialState();
+  grid[4][2]=1;
+  hand=[genTutorialBlock([[0,0,1]])];
+  tutorial.target={r:4,c:4};
+  tutorial.highlightRows=[4];
+  updateTutorialProgress();
+  showHint('先试着放在高亮行里');
+  renderAll();
+  applyTutorialHighlights();
+}
+function phase2Setup(){
+  tutorial.phase=2;
+  tutorial.step=0;
+  const held=holdBlock||genTutorialBlock([[0,0,1]]);
+  setupTutorialState();
+  holdBlock=held;
+  const rowA=[2,3,4,5,6,7,8,9,1];
+  for(let c=0;c<9;c++) if(c!==8) grid[3][c]=rowA[c];
+  tutorial.target={r:3,c:8};
+  updateTutorialProgress();
+  showHint('把 HOLD 里的方块拖出来，填满这一行');
+  renderAll();
+  applyTutorialHighlights();
+}
+function phase25Setup(){
+  tutorial.phase=2.5;
+  tutorial.step=0;
+  setupTutorialState();
+  const nums=[1,2,3,4,5,6,7,8];
+  let i=0;
+  for(let r=0;r<3;r++){
+    for(let c=0;c<3;c++){
+      if(r===2&&c===2) continue;
+      grid[r][c]=nums[i++];
+    }
+  }
+  hand=[genTutorialBlock([[0,0,9]])];
+  tutorial.highlightBox={br:0,bc:0};
+  tutorial.target={r:2,c:2};
+  updateTutorialProgress();
+  showHint('填满这个 3×3 区域');
+  renderAll();
+  applyTutorialHighlights();
+}
+function phase3Setup(){
+  tutorial.phase=3;
+  tutorial.step=0;
+  tutorial.needsUndo=false;
+  setupTutorialState();
+  tutorial.highlightBox=null;
+  tutorial.highlightRows=[];
+  const rowB=[1,2,3,4,5,6,7,8,9];
+  const rowC=[2,3,4,5,6,7,8,9,1];
+  for(let c=0;c<9;c++) if(c!==4) grid[1][c]=rowB[c];
+  for(let c=0;c<9;c++) if(c!==7) grid[6][c]=rowC[c];
+  hand=[
+    genTutorialBlock([[0,0,5]]),
+    genTutorialBlock([[0,0,9]])
+  ];
+  tutorial.targets=[{r:1,c:4},{r:6,c:7}];
+  tutorial.target=tutorial.targets[0];
+  updateTutorialProgress();
+  showHint('连续完成两次清除');
+  renderAll();
+  applyTutorialHighlights();
+}
+function phase4Setup(){
+  tutorial.phase=4;
+  tutorial.step=0;
+  tutorial.needsUndo=false;
+  setupTutorialState();
+  tutorial.highlightBox=null;
+  tutorial.highlightRows=[4];
+  const dupRow=[1,2,3,4,5,5,7,8,9];
+  for(let c=0;c<9;c++) grid[4][c]=dupRow[c];
+  hammers=1;
+  tutorial.target={r:4,c:5};
+  tutorial.highlightRect={r0:4,c0:3,r1:4,c1:6};
+  tutorial.lockedTool='hammer';
+  updateTutorialProgress();
+  showHint('这一行有重复数字，用锤子清除高亮重复格');
+  renderAll();
+  applyTutorialHighlights();
+}
+function endTutorial(){
+  tutorial.phase=999;
+  tutorial.pendingEnd=true;
+  clearTutorialFocus();
+  updateTutorialProgress();
+  showHint('现在开始挑战吧');
+  renderAll();
+  setTimeout(()=>{
+    tutorial.pendingEnd=false;
+    resetTutorialState();
+    settings.difficulty='easy';
+    newGame();
+  },900);
+}
+function nextTutorialPhase(){
+  if(!tutorial.active) return;
+  if(tutorial.phase===0) phase1Setup();
+  else if(tutorial.phase===1) phase2Setup();
+  else if(tutorial.phase===2) phase25Setup();
+  else if(tutorial.phase===2.5) phase3Setup();
+  else if(tutorial.phase===3) phase4Setup();
+  else if(tutorial.phase===4) endTutorial();
+}
+function startTutorial(){
+  unlockAudio();
+  goScreen('screen-game');
+  tutorial.active=true;
+  bgmPlay();
+  phase0Setup();
+}
 
 // ── Game Settings overlay (was Pause) ──
 function showGameSettings(){
@@ -1588,6 +1910,19 @@ let tokens=0,hammers=2,activeIdx=null;
 let undoStack=[],undoUsed=0;
 const MAX_UNDO=3;
 let hammerMode=false,_placedBlocks=[];
+let tutorial={
+  active:false,
+  phase:-1,
+  step:0,
+  target:null,
+  targets:[],
+  highlightRows:[],
+  highlightBox:null,
+  highlightRect:null,
+  lockedTool:null,
+  needsUndo:false,
+  pendingEnd:false,
+};
 const DragState={IDLE:0,PICKED:1,DRAGGING:2};
 let drag={
   state:DragState.IDLE,
@@ -1662,6 +1997,7 @@ function genBlock(){
 }
 function hasPlacement(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(canPlace(b,r,c))return true;return false;}
 function fillHand(){
+  if(tutorial.active) return hand.length;
   // Grid completely full — skip generation, let checkGameOver handle it
   if(grid.flat().filter(v=>v).length===81) return 0;
   while(hand.length<3){const b=genBlock();if(b)hand.push(b);else break;}
@@ -1686,6 +2022,7 @@ function canPlace(b,sr,sc){return b.cells.every(([dr,dc])=>{const r=sr+dr,c=sc+d
 // GAME INIT
 // ══════════════════════════════════════════════════════
 function newGame(){
+  resetTutorialState();
   document.getElementById('go-overlay').classList.remove('show');
   document.getElementById('pause-overlay').classList.remove('show');
   grid=Array.from({length:9},()=>Array(9).fill(0));
@@ -1700,7 +2037,7 @@ function newGame(){
 // ══════════════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════════════
-function renderAll(){renderBoard();renderTray();renderHold();updateStats();updateUndoUI();}
+function renderAll(){renderBoard();renderTray();renderHold();updateStats();updateUndoUI();applyTutorialHighlights();}
 
 function renderBoard(){
   const bd=document.getElementById('board');bd.innerHTML='';
@@ -1722,6 +2059,7 @@ function renderBoard(){
   const filled=grid.flat().filter(v=>v).length;
   const placedCountEl=$id('placedCount');
   if(placedCountEl) placedCountEl.textContent=`${filled}/81`;
+  applyTutorialHighlights();
 }
 
 // Highlight all valid anchor cells for the active block
@@ -1790,6 +2128,9 @@ function renderTray(){
   // Highlight both hold areas when a block is selected
   const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
   const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
+  if(tutorial.active){
+    if(rr) rr.disabled=true;
+  }
 }
 
 const _elCache=new Map();
@@ -2001,6 +2342,12 @@ function handleInvalidPlacement(block,sr,sc){
 
 function placeHoldBlock(r,c){
   if(!holdBlock) return;
+  const tutorialCheck=validateTutorialPlacement('HOLD',holdBlock,r,c);
+  if(!tutorialCheck.ok){
+    if(tutorialCheck.shake) shakeBoard();
+    if(tutorialCheck.hint) showHint(tutorialCheck.hint);
+    return;
+  }
   if(!canPlace(holdBlock,r,c)){
     flashInvalidPlacement();
     sfxError();
@@ -2013,6 +2360,7 @@ function placeHoldBlock(r,c){
   pushUndoSnapshot('HOLD',block,snapshot,pos);
   holdBlock=null; fillHand();
   finishPlacementFeedback(pos,clearInfo,{r,c,points:pts+clearInfo.bonus});
+  afterTutorialPlacement(clearInfo);
 }
 
 let _lastScore=0;
@@ -2057,16 +2405,17 @@ function _updateToolCount(id, val){
 
 function updateUndoUI(){
   const canUndo=undoUsed<MAX_UNDO&&undoStack.length>0;
+  const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
   const remaining=MAX_UNDO-undoUsed;
 
   // Mobile undo tool
   const ut=$id('undoTool');
-  if(ut) ut.classList.toggle('exhausted',!canUndo);
+  if(ut) ut.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
   _updateToolCount('undoCount', remaining);
 
   // Desktop undo tool
   const utd=$id('undoToolDesktop');
-  if(utd) utd.classList.toggle('exhausted',!canUndo);
+  if(utd) utd.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
   _updateToolCount('undoCountDesktop', remaining);
 
   // Pips — mobile
@@ -2103,17 +2452,122 @@ function selBlock(i){
   renderBoard();
 }
 
+function tutorialConflictAt(block,sr,sc){
+  return block.cells.some(([, ,val])=>usedNums(sr,sc).has(val));
+}
+function validateTutorialPlacement(origin,block,sr,sc){
+  if(!tutorial.active) return {ok:true};
+  if(tutorial.phase===3&&tutorial.needsUndo){
+    return {ok:false,hint:'先用 Undo 回退这一步',shake:true};
+  }
+  if(tutorial.phase===0){
+    if(sr===tutorial.target?.r&&sc===tutorial.target?.c) return {ok:true};
+    return {ok:false,hint:'试试高亮的位置',shake:true};
+  }
+  if(tutorial.phase===1){
+    if(tutorial.step===0){
+      if(sr===tutorial.target?.r&&tutorialConflictAt(block,sr,sc)){
+        tutorial.step=1;
+        tutorial.target=null;
+        tutorial.highlightRows=[];
+        tutorial.lockedTool='hold';
+        showHint('同一行不能重复，把这个方块先放进 HOLD');
+        renderAll();
+        return {ok:false,handled:true};
+      }
+      return {ok:false,hint:'先试试高亮行里的位置',shake:true};
+    }
+    return {ok:false,hint:'先把这个方块放进 HOLD',shake:true};
+  }
+  if(tutorial.phase===2){
+    if(origin!=='HOLD') return {ok:false,hint:'把 HOLD 里的方块拖出来使用',shake:true};
+    if(sr===tutorial.target?.r&&sc===tutorial.target?.c) return {ok:true};
+    return {ok:false,hint:'把 HOLD 里的方块放到高亮空位',shake:true};
+  }
+  if(tutorial.phase===2.5){
+    if(sr===tutorial.target?.r&&sc===tutorial.target?.c) return {ok:true};
+    return {ok:false,hint:'把方块放进高亮的 3×3 区域空位',shake:true};
+  }
+  if(tutorial.phase===3){
+    const target=tutorial.targets[tutorial.step];
+    if(target&&sr===target.r&&sc===target.c) return {ok:true};
+    return {ok:false,hint:'按顺序完成高亮的清除',shake:true};
+  }
+  if(tutorial.phase===4){
+    return {ok:false,hint:'这一步请先用锤子',shake:true};
+  }
+  return {ok:true};
+}
+function afterTutorialPlacement(clearInfo){
+  if(!tutorial.active) return;
+  if(tutorial.phase===0){
+    nextTutorialPhase();
+    return;
+  }
+  if(tutorial.phase===1){
+    nextTutorialPhase();
+    return;
+  }
+  if(tutorial.phase===2){
+    showHint('填满一行可以清除');
+    setTimeout(()=>nextTutorialPhase(), 650);
+    return;
+  }
+  if(tutorial.phase===2.5){
+    showHint('填满 3×3 区域也可以清除');
+    setTimeout(()=>nextTutorialPhase(), 650);
+    return;
+  }
+  if(tutorial.phase===3){
+    if(clearInfo.clears===0){
+      tutorial.needsUndo=true;
+      showHint('这一步没有完成清除，用 Undo 回退后再换另一个方块');
+      updateUndoUI();
+      return;
+    }
+    tutorial.step++;
+    if(combo>=2||tutorial.step>=tutorial.targets.length){
+      tutorial.needsUndo=false;
+      showHint('COMBO!');
+      setTimeout(()=>nextTutorialPhase(),650);
+    }else{
+      tutorial.target=tutorial.targets[tutorial.step];
+      showHint('再完成一次清除');
+      renderBoard();
+    }
+  }
+}
+function handleTutorialLockedAction(hint,shake=false){
+  if(!tutorial.active) return false;
+  if(shake) shakeBoard();
+  if(hint) showHint(hint);
+  return true;
+}
+
 function storeToHold(idx){
+  const tutorialHoldStep=tutorial.active&&tutorial.phase===1&&tutorial.step===1;
+  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction('教程中暂时不能使用 HOLD');
   const block=hand[idx]; if(!block) return;
   if(!holdBlock){ holdBlock=block; hand.splice(idx,1); }
   else { const tmp=holdBlock; holdBlock=block; hand[idx]=tmp; }
-  sfxHold(); activeIdx=null; fillHand(); renderAll();
+  sfxHold(); activeIdx=null;
+  if(tutorialHoldStep){
+    tutorial.lockedTool=null;
+    tutorial.step=2;
+    hand=[];
+    phase2Setup();
+    return;
+  }
+  fillHand(); renderAll();
 }
 function swapHold(){
+  const tutorialHoldStep=tutorial.active&&tutorial.phase===1&&tutorial.step===1;
+  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction('教程中暂时不能使用 HOLD');
   if(activeIdx!==null){ storeToHold(activeIdx); return; }
   if(holdBlock&&hand.length<3){ hand.push(holdBlock); holdBlock=null; sfxHold(); fillHand(); renderAll(); }
 }
 function doReroll(){
+  if(isTutorialLocked()) return;
   if(tokens<1)return;
   tokens--;
   hand=[];
@@ -2123,6 +2577,10 @@ function doReroll(){
   if(count===0) checkGameOver();
 }
 function activateHammer(){
+  if(tutorial.active&&tutorial.phase!==4){
+    handleTutorialLockedAction('教程后面会教你锤子');
+    return;
+  }
   if(hammers<=0)return;
   hammerMode=!hammerMode;
   activeIdx=null;
@@ -2186,6 +2644,10 @@ function onCellClick(e){
   if(drag.state!==DragState.IDLE)return;
   const r=+e.currentTarget.dataset.row,c=+e.currentTarget.dataset.col;
   if(hammerMode){
+    if(tutorial.active&&tutorial.phase===4&&(r!==tutorial.target?.r||c!==tutorial.target?.c)){
+      handleTutorialLockedAction('用锤子清除高亮格子',true);
+      return;
+    }
     if(grid[r][c]!==0){
       // Smash animation first
       const cell=e.currentTarget;
@@ -2198,6 +2660,9 @@ function onCellClick(e){
         applyHammerMode();
         updateStats();
         renderAll();
+        if(tutorial.active&&tutorial.phase===4&&r===tutorial.target?.r&&c===tutorial.target?.c){
+          nextTutorialPhase();
+        }
       }, 200);
     }
     return;
@@ -2233,6 +2698,12 @@ function tryPlace(hi,sr,sc){
   // Route HOLD block placements
   if(hi==='HOLD'){ placeHoldBlock(sr,sc); return; }
   const block=hand[hi];if(!block||block.used)return;
+  const tutorialCheck=validateTutorialPlacement(hi,block,sr,sc);
+  if(!tutorialCheck.ok){
+    if(tutorialCheck.shake) shakeBoard();
+    if(tutorialCheck.hint) showHint(tutorialCheck.hint);
+    return;
+  }
   if(!canPlace(block,sr,sc)){
     handleInvalidPlacement(block,sr,sc);
     return;
@@ -2243,6 +2714,7 @@ function tryPlace(hi,sr,sc){
   pushUndoSnapshot(hi,block,snapshot,pos);
   hand[hi]=null;hand=hand.filter(Boolean);fillHand();activeIdx=null;
   finishPlacementFeedback(pos,clearInfo,{r:sr,c:sc,points:pts+clearInfo.bonus});
+  afterTutorialPlacement(clearInfo);
 }
 
 // ══════════════════════════════════════════════════════
@@ -2382,6 +2854,8 @@ function flashBox(br,bc,ok){
 // UNDO
 // ══════════════════════════════════════════════════════
 function undoPlace(){
+  const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
+  if(isTutorialLocked()&&!tutorialUndoOnly) return;
   if(undoUsed>=MAX_UNDO||undoStack.length===0)return;
   const snap=undoStack.pop();
   grid=snap.gs; snap.block.used=false; snap.block.pos=null;
@@ -2394,6 +2868,11 @@ function undoPlace(){
     hand.unshift(snap.block); if(hand.length>3) hand.pop();
     activeIdx=0;
   }
+  if(tutorial.active&&tutorial.phase===3){
+    tutorial.needsUndo=false;
+    tutorial.target=tutorial.targets[tutorial.step]||tutorial.target;
+    showHint('回到这一步了，换另一个方块试试');
+  }
   undoUsed++; renderAll();
 }
 
@@ -2401,6 +2880,7 @@ function undoPlace(){
 // GAME OVER
 // ══════════════════════════════════════════════════════
 function checkGameOver(){
+  if(tutorial.active) return;
   const all=[...hand.filter(Boolean),...(holdBlock?[holdBlock]:[])];
   if(all.length===0||all.every(b=>!hasPlacement(b)))triggerGameOver();
 }
