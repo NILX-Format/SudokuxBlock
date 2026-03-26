@@ -375,6 +375,31 @@ body.combo-screen-flash::before{
   #screen-game.tutorial-mode .hand-zone{
     transform:scale(1.2);
   }
+  #screen-game.tutorial-mode .game-topbar{
+    display:none;
+  }
+  #screen-game.tutorial-mode .score-bar-wrap{
+    display:none;
+  }
+  #screen-game.tutorial-mode .board-wrap{
+    padding:4px 6px 0;
+  }
+  #screen-game.tutorial-mode .board-container{
+    display:flex;
+    justify-content:center;
+  }
+  #screen-game.tutorial-mode #board{
+    width:min(82vw,340px)!important;
+    height:min(82vw,340px)!important;
+    margin:0 auto;
+  }
+  #screen-game.tutorial-mode .hand-zone{
+    transform:none;
+    margin-top:8px;
+  }
+  #screen-game.tutorial-mode .tutorial-progress{
+    margin-top:6px;
+  }
 }
 
 /* ── HAMMER MODE ── */
@@ -998,7 +1023,7 @@ body.combo-screen-flash::before{
                 </div>
               </div>
             </div>
-            <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ Reroll <span id="rerollCost">1⬡</span></button>
+            <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ Reroll <span id="rerollCost">2⬡</span></button>
           </div>
         </div>
         <div class="hand-row">
@@ -1169,8 +1194,8 @@ body.combo-screen-flash::before{
       <div class="help-heading">Basics</div>
       <div class="help-row"><span class="help-key">Drag / Tap</span><span>Select a block from your hand, then tap a cell to place it</span></div>
       <div class="help-row"><span class="help-key">Hold</span><span>Store one block to use later — tap hold slot to swap</span></div>
-      <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (costs 1 ⬡)</span></div>
-      <div class="help-row"><span class="help-key">Hammer</span><span>Remove one already-placed cell (2 uses per game)</span></div>
+      <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (costs 2 ⬡)</span></div>
+      <div class="help-row"><span class="help-key">Hammer</span><span>Remove one already-placed cell (buy +1 use for 2 ⬡ when empty)</span></div>
       <div class="help-row"><span class="help-key">Undo</span><span>Take back your last move (3 uses per game)</span></div>
     </div>
 
@@ -2199,6 +2224,9 @@ let score=0,moves=0,errors=0,combo=0,multiplier=1,streak=0;
 let tokens=0,hammers=2,activeIdx=null;
 let undoStack=[],undoUsed=0;
 const MAX_UNDO=3;
+const REROLL_COST=2;
+const HAMMER_BUY_COST=2;
+const HAMMER_STOCK_CAP=5;
 let hammerMode=false,_placedBlocks=[];
 const ANALYTICS_ENDPOINT='';
 let runMetrics={
@@ -2386,12 +2414,133 @@ function pickDigit(forbidden,allowFallback=true){
   for(const{d,w}of ws){rnd-=w;if(rnd<=0)return d;}
   return ws[ws.length-1].d;
 }
+function weighted(weights){
+  const total=weights.reduce((s,w)=>s+w,0);
+  let roll=Math.random()*total;
+  for(let i=0;i<weights.length;i++){
+    roll-=weights[i];
+    if(roll<=0) return i;
+  }
+  return weights.length-1;
+}
+function getRerollType(){
+  const nearDeath=isNearDeath();
+  if(nearDeath){
+    return ['normal','perfect','godlike'][weighted([30,50,20])];
+  }
+  if(combo>=2){
+    return ['normal','perfect','godlike'][weighted([75,20,5])];
+  }
+  return ['normal','perfect','godlike'][weighted([65,30,5])];
+}
 function usedNums(r,c){
   const s=new Set();
   for(let i=0;i<9;i++){if(grid[r][i])s.add(grid[r][i]);if(grid[i][c])s.add(grid[i][c]);}
   const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
   for(let dr=0;dr<3;dr++)for(let dc=0;dc<3;dc++)if(grid[br+dr][bc+dc])s.add(grid[br+dr][bc+dc]);
   return s;
+}
+function findAlmostCompleteTargets(){
+  const out=[];
+  const seen=new Set();
+  // rows
+  for(let r=0;r<9;r++){
+    let emptyC=-1;
+    const nums=new Set();
+    for(let c=0;c<9;c++){
+      const v=grid[r][c];
+      if(v===0){ if(emptyC!==-1){ emptyC=-2; break; } emptyC=c; }
+      else nums.add(v);
+    }
+    if(emptyC>=0&&nums.size===8){
+      const missing=getMissingValueFromNums(nums);
+      if(missing!=null){
+        const key=`${r},${emptyC},${missing}`;
+        if(!seen.has(key)){ seen.add(key); out.push({r,c:emptyC,val:missing}); }
+      }
+    }
+  }
+  // cols
+  for(let c=0;c<9;c++){
+    let emptyR=-1;
+    const nums=new Set();
+    for(let r=0;r<9;r++){
+      const v=grid[r][c];
+      if(v===0){ if(emptyR!==-1){ emptyR=-2; break; } emptyR=r; }
+      else nums.add(v);
+    }
+    if(emptyR>=0&&nums.size===8){
+      const missing=getMissingValueFromNums(nums);
+      if(missing!=null){
+        const key=`${emptyR},${c},${missing}`;
+        if(!seen.has(key)){ seen.add(key); out.push({r:emptyR,c,val:missing}); }
+      }
+    }
+  }
+  // boxes
+  for(let br=0;br<3;br++) for(let bc=0;bc<3;bc++){
+    let er=-1,ec=-1;
+    const nums=new Set();
+    for(let dr=0;dr<3;dr++) for(let dc=0;dc<3;dc++){
+      const r=br*3+dr,c=bc*3+dc,v=grid[r][c];
+      if(v===0){
+        if(er!==-1){ er=-2; ec=-2; dr=3; break; }
+        er=r; ec=c;
+      } else nums.add(v);
+    }
+    if(er>=0&&nums.size===8){
+      const missing=getMissingValueFromNums(nums);
+      if(missing!=null){
+        const key=`${er},${ec},${missing}`;
+        if(!seen.has(key)){ seen.add(key); out.push({r:er,c:ec,val:missing}); }
+      }
+    }
+  }
+  return out;
+}
+function makeSingleCellBlock(value,label='1×1'){
+  return {
+    name:label,
+    tier:1,
+    color:getBlockColor(1),
+    cells:[[0,0,value]],
+    used:false,
+  };
+}
+function buildRerollHand(type){
+  const nextHand=[];
+  const targets=findAlmostCompleteTargets();
+  const usedVals=new Set();
+  const pushFinisher=()=>{
+    const pool=targets.filter(t=>!usedVals.has(t.val));
+    const pick=(pool.length?pool:targets)[Math.floor(Math.random()*(pool.length?pool:targets).length)];
+    if(!pick) return false;
+    nextHand.push(makeSingleCellBlock(pick.val,'FINISH'));
+    usedVals.add(pick.val);
+    return true;
+  };
+
+  if((type==='perfect'||type==='godlike')&&targets.length){
+    pushFinisher();
+  }
+  if(type==='godlike'&&targets.length>1&&nextHand.length<2){
+    pushFinisher();
+  }
+
+  while(nextHand.length<3){
+    const block=genBlock();
+    if(!block) break;
+    nextHand.push(block);
+  }
+
+  if(!nextHand.some(b=>b&&!b.used&&hasPlacement(b))){
+    const rescue=forceBlock();
+    if(rescue){
+      if(nextHand.length===0) nextHand.push(rescue);
+      else nextHand[0]=rescue;
+    }
+  }
+  return nextHand.slice(0,3);
 }
 function genBlock(){
   for(let a=0;a<30;a++){
@@ -2551,7 +2700,7 @@ function renderTray(){
   });
   const rem=hand.filter(b=>b&&!b.used).length;
   $id('lastWarn').textContent=(rem===1&&!holdBlock)?'⚠ LAST BLOCK!':'';
-  const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<1;
+  const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<REROLL_COST;
   // Highlight both hold areas when a block is selected
   const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
   const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
@@ -2816,6 +2965,7 @@ function updateStats(){
   // Tokens — both mobile and desktop
   const td=$id('tokensDisp');if(td)td.textContent=tokens;
   const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
+  const rc=$id('rerollCost');if(rc)rc.textContent=`${REROLL_COST}⬡`;
 
   // Hammer count — mobile + desktop
   _updateToolCount('hammerCount', hammers);
@@ -3004,10 +3154,16 @@ function swapHold(){
 }
 function doReroll(){
   if(isTutorialLocked()) return;
-  if(tokens<1)return;
-  tokens--;
-  hand=[];
-  const count=fillHand();
+  if(tokens<REROLL_COST)return;
+  tokens-=REROLL_COST;
+  const rerollType=getRerollType();
+  hand=buildRerollHand(rerollType);
+  while(hand.length<3){
+    const b=genBlock();
+    if(!b) break;
+    hand.push(b);
+  }
+  const count=hand.length;
   updateRunMinPlacements();
   activeIdx=null;
   renderAll();
@@ -3018,7 +3174,13 @@ function activateHammer(){
     handleTutorialLockedAction('教程后面会教你锤子');
     return;
   }
-  if(hammers<=0)return;
+  if(hammers<=0){
+    if(tokens<HAMMER_BUY_COST) return;
+    if(hammers>=HAMMER_STOCK_CAP) return;
+    tokens-=HAMMER_BUY_COST;
+    hammers++;
+    animateTokenHUD();
+  }
   hammerMode=!hammerMode;
   activeIdx=null;
   applyHammerMode();
