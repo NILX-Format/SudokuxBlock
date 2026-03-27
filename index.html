@@ -356,7 +356,11 @@ body.combo-screen-flash::before{
 .tutorial-hand-focus{
   position:relative;
   z-index:10052;
-  box-shadow:0 0 0 1px rgba(40,212,255,0.38),0 0 22px rgba(40,212,255,0.2);
+  box-shadow:0 0 0 2px rgba(40,212,255,0.72),0 0 30px rgba(40,212,255,0.28);
+  background:rgba(40,212,255,0.06);
+}
+.hold-area.tutorial-target{
+  box-shadow:0 0 0 2px rgba(40,212,255,0.72),0 0 24px rgba(40,212,255,0.22)!important;
 }
 #screen-game.tutorial-mode #scoreDisp,
 #screen-game.tutorial-mode #comboDisp,
@@ -399,6 +403,18 @@ body.combo-screen-flash::before{
   }
   #screen-game.tutorial-mode .tutorial-progress{
     margin-top:6px;
+  }
+  #screen-game.tutorial-mode .hold-slot{
+    width:88px;
+    min-height:102px;
+    touch-action:none;
+  }
+  #screen-game.tutorial-mode .hold-slot .hold-preview{
+    min-height:56px;
+    touch-action:none;
+  }
+  #screen-game.tutorial-mode .hold-area.tutorial-target{
+    box-shadow:0 0 0 2px rgba(40,212,255,0.85),0 0 30px rgba(40,212,255,0.35)!important;
   }
 }
 
@@ -2767,16 +2783,19 @@ function setHoldPreview(previewEl, cellSz){
     if(!holdBlock) return;
     if(drag.state!==DragState.IDLE) return;
     e.preventDefault();
-    if(tutorial.active&&tutorial.phase===2&&tutorial.target){
-      tutorial.fx={...tutorial.fx,focus:null,pointer:'target'};
-      applyTutorialHighlights();
-      queueTutorialFXSync();
-    }
+    const guideToBoard=tutorial.active&&tutorial.phase===2&&tutorial.target;
     const ghost=createGhost(holdBlock);
     startGhostDrag(ghost, holdBlock, 'HOLD', e.clientX, e.clientY);
     document.addEventListener('pointermove',onPMove,{passive:false});
     document.addEventListener('pointerup',onHoldDrop);
     document.addEventListener('pointercancel',onHoldDrop);
+    if(guideToBoard){
+      requestAnimationFrame(()=>{
+        tutorial.fx={...tutorial.fx,focus:null,pointer:'target'};
+        updateTutorialFX();
+        queueTutorialFXSync();
+      });
+    }
   };
 }
 
