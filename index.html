@@ -1028,7 +1028,7 @@ body.combo-screen-flash::before{
                 <div class="mob-tool-top">
                   <div class="tool-svg-wrap" id="undoSVG"></div>
                   <span class="mob-tool-name">UNDO</span>
-                  <span class="mob-tool-count" id="undoCount">×3</span>
+                  <span class="mob-tool-count" id="undoCount">×1</span>
                 </div>
                 <div class="tool-pips" id="undoPips"></div>
               </div>
@@ -1105,7 +1105,7 @@ body.combo-screen-flash::before{
           <div class="tool-svg-wrap" id="undoSVGDesktop"></div>
           <span class="tool-name">UNDO</span>
         </div>
-        <span class="tool-count" id="undoCountDesktop">×3</span>
+        <span class="tool-count" id="undoCountDesktop">×1</span>
       </div>
       <div class="tool-pips" id="undoPipsDesktop"></div>
     </div>
@@ -1213,7 +1213,7 @@ body.combo-screen-flash::before{
       <div class="help-row"><span class="help-key">Hold</span><span>Store one block to use later — tap hold slot to swap</span></div>
       <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (costs 2 ⬡)</span></div>
       <div class="help-row"><span class="help-key">Hammer</span><span>Remove one already-placed cell (buy +1 use for 2 ⬡ when empty)</span></div>
-      <div class="help-row"><span class="help-key">Undo</span><span>Take back your last move (3 uses per game)</span></div>
+      <div class="help-row"><span class="help-key">Undo</span><span>Start with 1 free use; buy +1 for 3 ⬡</span></div>
     </div>
 
     <div class="help-section">
@@ -1571,7 +1571,7 @@ function isTutorialLocked(){
 }
 function setupTutorialState(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
-  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoUsed=0;_placedBlocks=[];
+  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
@@ -2239,11 +2239,15 @@ function hidePause(){hideGameSettings();}
 let grid=[],hand=[],holdBlock=null;
 let score=0,moves=0,errors=0,combo=0,multiplier=1,streak=0;
 let tokens=0,hammers=2,activeIdx=null;
-let undoStack=[],undoUsed=0;
-const MAX_UNDO=3;
+let undoStack=[],undoCharges=1;
+const UNDO_GIFT=1;
+const UNDO_BUY_COST=3;
+const UNDO_PIP_MAX=3;
+const MAX_UNDO_STACK=12;
 const REROLL_COST=2;
 const HAMMER_BUY_COST=2;
 const HAMMER_STOCK_CAP=5;
+const DRAG_THRESHOLD=5;
 let hammerMode=false,_placedBlocks=[];
 const ANALYTICS_ENDPOINT='';
 let runMetrics={
@@ -2621,7 +2625,7 @@ function newGame(){
   document.getElementById('go-overlay').classList.remove('show');
   document.getElementById('pause-overlay').classList.remove('show');
   grid=Array.from({length:9},()=>Array(9).fill(0));
-  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoUsed=0;_placedBlocks=[];
+  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
@@ -2686,7 +2690,37 @@ function renderTray(){
     if(!block||block.used)return;
     const draggingOrigin=drag.state!==DragState.IDLE&&drag.sourceIdx===i;
     const slot=document.createElement('div');slot.className='tray-slot'+(activeIdx===i?' active':'')+(draggingOrigin?' dragging-origin':'');
-    slot.addEventListener('pointerdown',e=>onPDown(e,i));
+    Input.bind(slot,{
+      onStart:()=>{
+        rAC();
+        const block=hand[i];
+        if(!block) return null;
+        if(hammerMode){hammerMode=false;updateStats();}
+        return {sourceIdx:i,block};
+      },
+      onDragStart:(p,e,meta)=>{
+        if(!meta||drag.state!==DragState.IDLE) return;
+        const ghost=createGhost(meta.block);
+        beginPointerDrag(e, ghost, meta.block, meta.sourceIdx, p);
+        if(drag.state===DragState.IDLE) return;
+        activeIdx=meta.sourceIdx;
+        renderTray();
+        renderBoard();
+      },
+      onMove:(_,e)=>{
+        onPMove(e);
+      },
+      onEnd:(_,e,ctx)=>{
+        if(ctx.dragging&&drag.state!==DragState.IDLE){
+          onPUp(e);
+          return;
+        }
+        selBlock(i);
+      },
+      onCancel:(_,e,ctx)=>{
+        if(ctx.dragging&&drag.state!==DragState.IDLE) onPUp(e);
+      }
+    });
     const cells=block.cells,mr=Math.max(...cells.map(([r])=>r)),mc=Math.max(...cells.map(([,c])=>c));
     const mini=document.createElement('div');mini.className='block-mini';
     mini.style.gridTemplateColumns=`repeat(${mc+1},20px)`;mini.style.gridTemplateRows=`repeat(${mr+1},20px)`;
@@ -2742,6 +2776,61 @@ function syncEl(mobileId, desktopId, html){
   if(m) m.innerHTML=html;
   if(d) d.innerHTML=html;
 }
+const Input=(()=>{
+  function getPoint(e){
+    return {x:e.clientX,y:e.clientY};
+  }
+  function bind(el,handlers){
+    if(!el||el.__inputBound) return;
+    el.__inputBound=true;
+    const state={activeId:null,start:null,dragging:false,meta:null};
+    const reset=()=>{
+      state.activeId=null;
+      state.start=null;
+      state.dragging=false;
+      state.meta=null;
+    };
+    el.addEventListener('pointerdown',e=>{
+      if(e.button!==undefined&&e.button!==0) return;
+      if(state.activeId!==null) return;
+      e.preventDefault();
+      state.activeId=e.pointerId;
+      state.start=getPoint(e);
+      state.dragging=false;
+      state.meta=handlers.onStart?.(state.start,e)??null;
+      if(typeof el.setPointerCapture==='function'){
+        try{el.setPointerCapture(state.activeId);}catch(_){}
+      }
+    });
+    el.addEventListener('pointermove',e=>{
+      if(e.pointerId!==state.activeId||!state.start) return;
+      const p=getPoint(e);
+      if(!state.dragging){
+        const dx=p.x-state.start.x;
+        const dy=p.y-state.start.y;
+        if((dx*dx+dy*dy)>=DRAG_THRESHOLD*DRAG_THRESHOLD){
+          state.dragging=true;
+          handlers.onDragStart?.(p,e,state.meta,state.start);
+        }
+      }
+      if(state.dragging) handlers.onMove?.(p,e,state.meta,state.start);
+    });
+    el.addEventListener('pointerup',e=>{
+      if(e.pointerId!==state.activeId) return;
+      handlers.onEnd?.(getPoint(e),e,{dragging:state.dragging,meta:state.meta,start:state.start});
+      if(typeof el.releasePointerCapture==='function'){
+        try{el.releasePointerCapture(e.pointerId);}catch(_){}
+      }
+      reset();
+    });
+    el.addEventListener('pointercancel',e=>{
+      if(e.pointerId!==state.activeId) return;
+      handlers.onCancel?.(getPoint(e),e,{dragging:state.dragging,meta:state.meta,start:state.start});
+      reset();
+    });
+  }
+  return {bind};
+})();
 // Helper: build hold preview mini grid
 function buildHoldMini(cellSz){
   if(!holdBlock) return null;
@@ -2781,20 +2870,37 @@ function setHoldPreview(previewEl, cellSz){
   }
   const mini=buildHoldMini(cellSz);
   if(mini) previewEl.appendChild(mini);
-  previewEl.onpointerdown = e => {
-    if(!holdBlock) return;
-    if(drag.state!==DragState.IDLE) return;
-    const guideToBoard=tutorial.active&&tutorial.phase===2&&tutorial.target;
-    const ghost=createGhost(holdBlock);
-    beginPointerDrag(e, ghost, holdBlock, 'HOLD');
-    if(guideToBoard){
-      requestAnimationFrame(()=>{
-        tutorial.fx={...tutorial.fx,focus:null,pointer:'target'};
-        updateTutorialFX();
-        queueTutorialFXSync();
-      });
+  Input.bind(previewEl,{
+    onStart:()=>{
+      if(!holdBlock||drag.state!==DragState.IDLE) return null;
+      return {
+        sourceIdx:'HOLD',
+        block:holdBlock,
+        guideToBoard:!!(tutorial.active&&tutorial.phase===2&&tutorial.target)
+      };
+    },
+    onDragStart:(p,e,meta)=>{
+      if(!meta) return;
+      const ghost=createGhost(meta.block);
+      beginPointerDrag(e, ghost, meta.block, meta.sourceIdx, p);
+      if(meta.guideToBoard){
+        requestAnimationFrame(()=>{
+          tutorial.fx={...tutorial.fx,focus:null,pointer:'target'};
+          updateTutorialFX();
+          queueTutorialFXSync();
+        });
+      }
+    },
+    onMove:(_,e)=>{
+      onPMove(e);
+    },
+    onEnd:(_,e,ctx)=>{
+      if(ctx.dragging&&drag.state!==DragState.IDLE) onPUp(e);
+    },
+    onCancel:(_,e,ctx)=>{
+      if(ctx.dragging&&drag.state!==DragState.IDLE) onPUp(e);
     }
-  };
+  });
 }
 
 function renderHold(){
@@ -2904,7 +3010,7 @@ function applyPlacementRewards(block,pos){
 
 function pushUndoSnapshot(origin,block,snapshot,pos){
   undoStack.push({hi:origin,block,...snapshot,pos});
-  if(undoStack.length>MAX_UNDO) undoStack.shift();
+  if(undoStack.length>MAX_UNDO_STACK) undoStack.shift();
 }
 
 function finishPlacementFeedback(pos,clearInfo,scoreAnchor){
@@ -3011,27 +3117,37 @@ function _updateToolCount(id, val){
 }
 
 function updateUndoUI(){
-  const canUndo=undoUsed<MAX_UNDO&&undoStack.length>0;
+  const canUndo=undoCharges>0&&undoStack.length>0;
   const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
-  const remaining=MAX_UNDO-undoUsed;
+  const canBuyUndo=undoCharges<=0&&tokens>=UNDO_BUY_COST&&undoStack.length>0&&!(tutorial.active&&tutorial.phase!==3);
+  const remaining=undoCharges;
 
   // Mobile undo tool
   const ut=$id('undoTool');
-  if(ut) ut.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
-  _updateToolCount('undoCount', remaining);
+  if(ut) ut.classList.toggle('exhausted',!((canUndo||canBuyUndo)&&(tutorialUndoOnly||!isTutorialLocked())));
+  const uc=$id('undoCount');
+  if(uc){
+    uc.textContent=remaining>0?`×${remaining}`:(canBuyUndo?`BUY ${UNDO_BUY_COST}⬡`:'×0');
+    uc.classList.toggle('zero',remaining<=0&&!canBuyUndo);
+  }
 
   // Desktop undo tool
   const utd=$id('undoToolDesktop');
-  if(utd) utd.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
-  _updateToolCount('undoCountDesktop', remaining);
+  if(utd) utd.classList.toggle('exhausted',!((canUndo||canBuyUndo)&&(tutorialUndoOnly||!isTutorialLocked())));
+  const ucd=$id('undoCountDesktop');
+  if(ucd){
+    ucd.textContent=remaining>0?`×${remaining}`:(canBuyUndo?`BUY ${UNDO_BUY_COST}⬡`:'×0');
+    ucd.classList.toggle('zero',remaining<=0&&!canBuyUndo);
+  }
 
   // Pips — mobile
   const pips=$id('undoPips');
   if(pips){
     pips.innerHTML='';
-    for(let i=0;i<MAX_UNDO;i++){
+    const shown=Math.min(UNDO_PIP_MAX,Math.max(remaining,UNDO_PIP_MAX));
+    for(let i=0;i<shown;i++){
       const p=document.createElement('div');
-      p.className='tool-pip'+(i<undoUsed?' used':'');
+      p.className='tool-pip'+(i>=remaining?' used':'');
       pips.appendChild(p);
     }
   }
@@ -3039,9 +3155,10 @@ function updateUndoUI(){
   const pipsd=$id('undoPipsDesktop');
   if(pipsd){
     pipsd.innerHTML='';
-    for(let i=0;i<MAX_UNDO;i++){
+    const shown=Math.min(UNDO_PIP_MAX,Math.max(remaining,UNDO_PIP_MAX));
+    for(let i=0;i<shown;i++){
       const p=document.createElement('div');
-      p.className='tool-pip'+(i<undoUsed?' used':'');
+      p.className='tool-pip'+(i>=remaining?' used':'');
       pipsd.appendChild(p);
     }
   }
@@ -3555,7 +3672,14 @@ function flashBox(br,bc,ok){
 function undoPlace(){
   const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
   if(isTutorialLocked()&&!tutorialUndoOnly) return;
-  if(undoUsed>=MAX_UNDO||undoStack.length===0)return;
+  if(undoStack.length===0)return;
+  if(undoCharges<=0){
+    if(tokens<UNDO_BUY_COST) return;
+    tokens-=UNDO_BUY_COST;
+    undoCharges++;
+    animateTokenHUD();
+  }
+  if(undoCharges<=0) return;
   const snap=undoStack.pop();
   grid=snap.gs; snap.block.used=false; snap.block.pos=null;
   _placedBlocks=_placedBlocks.filter(b=>b!==snap.block);
@@ -3571,7 +3695,8 @@ function undoPlace(){
     tutorial.needsUndo=false;
     tutorial.target=tutorial.targets[tutorial.step]||tutorial.target;
   }
-  undoUsed++; renderAll();
+  undoCharges=Math.max(0,undoCharges-1);
+  renderAll();
 }
 
 // ══════════════════════════════════════════════════════
@@ -3644,21 +3769,20 @@ function startGhostDrag(ghost, block, sourceIdx, x, y){
     gridY:null,
   };
 }
-function beginPointerDrag(e, ghost, block, sourceIdx){
+function beginPointerDrag(e, ghost, block, sourceIdx, point=null){
   if(!e) return;
   if(e.button!==undefined&&e.button!==0) return;
   if(drag.state!==DragState.IDLE) return;
-  e.preventDefault();
+  if(e.cancelable) e.preventDefault();
   const target=e.currentTarget||e.target;
   if(target&&typeof target.setPointerCapture==='function'&&e.pointerId!=null){
     try{ target.setPointerCapture(e.pointerId); }catch(_){}
   }
-  startGhostDrag(ghost, block, sourceIdx, e.clientX, e.clientY);
+  const px=point?point.x:e.clientX;
+  const py=point?point.y:e.clientY;
+  startGhostDrag(ghost, block, sourceIdx, px, py);
   drag.pointerId=(e.pointerId!=null)?e.pointerId:null;
   drag.captureEl=target||null;
-  document.addEventListener('pointermove',onPMove,{passive:false});
-  document.addEventListener('pointerup',onPUp);
-  document.addEventListener('pointercancel',onPUp);
 }
 
 function cleanupDrag(){
