@@ -817,6 +817,7 @@ body.combo-screen-flash::before{
   margin-top:8px;min-height:44px;
   display:flex;justify-content:center;align-items:center;
   cursor:grab;
+  touch-action:none;
 }
 .hold-preview:active{cursor:grabbing;}
 .hold-empty-hint{font-size:0.42rem;color:var(--muted);letter-spacing:0.22em;}
@@ -1574,7 +1575,7 @@ function setupTutorialState(){
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
-  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
   clearSnap();_csz=0;
 }
 function phase0Setup(){
@@ -2272,6 +2273,8 @@ let drag={
   ghost:null,
   preview:null,
   sourceIdx:null,
+  pointerId:null,
+  captureEl:null,
   anchorOffsetX:0,
   anchorOffsetY:0,
   dragLift:0,
@@ -2622,7 +2625,7 @@ function newGame(){
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
-  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
   clearSnap();_csz=0;fillHand();initRunMetrics();renderAll();
 }
 
@@ -2683,7 +2686,6 @@ function renderTray(){
     if(!block||block.used)return;
     const draggingOrigin=drag.state!==DragState.IDLE&&drag.sourceIdx===i;
     const slot=document.createElement('div');slot.className='tray-slot'+(activeIdx===i?' active':'')+(draggingOrigin?' dragging-origin':'');
-    slot.addEventListener('click',()=>selBlock(i));
     slot.addEventListener('pointerdown',e=>onPDown(e,i));
     const cells=block.cells,mr=Math.max(...cells.map(([r])=>r)),mc=Math.max(...cells.map(([,c])=>c));
     const mini=document.createElement('div');mini.className='block-mini';
@@ -2782,13 +2784,9 @@ function setHoldPreview(previewEl, cellSz){
   previewEl.onpointerdown = e => {
     if(!holdBlock) return;
     if(drag.state!==DragState.IDLE) return;
-    e.preventDefault();
     const guideToBoard=tutorial.active&&tutorial.phase===2&&tutorial.target;
     const ghost=createGhost(holdBlock);
-    startGhostDrag(ghost, holdBlock, 'HOLD', e.clientX, e.clientY);
-    document.addEventListener('pointermove',onPMove,{passive:false});
-    document.addEventListener('pointerup',onHoldDrop);
-    document.addEventListener('pointercancel',onHoldDrop);
+    beginPointerDrag(e, ghost, holdBlock, 'HOLD');
     if(guideToBoard){
       requestAnimationFrame(()=>{
         tutorial.fx={...tutorial.fx,focus:null,pointer:'target'};
@@ -2855,18 +2853,6 @@ function createGhost(block){
 
 function createPreview(block){
   return buildGhostFromBlock(block,{zIndex:10079,opacity:0.25,scale:1,shadow:'none',filter:'brightness(1.3)'});
-}
-
-function onHoldDrop(e){
-  document.removeEventListener('pointermove',onPMove);
-  document.removeEventListener('pointerup',onHoldDrop);
-  document.removeEventListener('pointercancel',onHoldDrop);
-  if(drag.state===DragState.IDLE) return;
-  const drop=(drag.gridY!=null&&drag.gridX!=null)?{r:drag.gridY,c:drag.gridX}:null;
-  cleanupDrag();
-  renderTray();
-  renderBoard();
-  if(drop) placeHoldBlock(drop.r, drop.c);
 }
 
 function flashInvalidPlacement(){
@@ -2986,15 +2972,33 @@ function updateStats(){
   const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
   const rc=$id('rerollCost');if(rc)rc.textContent=`${REROLL_COST}⬡`;
 
-  // Hammer count — mobile + desktop
-  _updateToolCount('hammerCount', hammers);
-  _updateToolCount('hammerCountDesktop', hammers);
+  // Hammer count / buy affordance — mobile + desktop
+  const canBuyHammer=(hammers<=0&&tokens>=HAMMER_BUY_COST&&!(tutorial.active&&tutorial.phase!==4));
+  const hammerLabel=hammers>0?`×${hammers}`:(canBuyHammer?`BUY ${HAMMER_BUY_COST}⬡`:'×0');
+  const hc=$id('hammerCount');
+  if(hc){
+    hc.textContent=hammerLabel;
+    hc.classList.toggle('zero',hammers<=0&&!canBuyHammer);
+    hc.classList.toggle('bump',false);
+  }
+  const hcd=$id('hammerCountDesktop');
+  if(hcd){
+    hcd.textContent=hammerLabel;
+    hcd.classList.toggle('zero',hammers<=0&&!canBuyHammer);
+    hcd.classList.toggle('bump',false);
+  }
 
   // Hammer tool state — mobile + desktop
   const ht=$id('hammerTool');
-  if(ht){ ht.classList.toggle('exhausted',hammers<=0); ht.classList.toggle('active-tool',hammerMode); }
+  if(ht){
+    ht.classList.toggle('exhausted',hammers<=0&&!canBuyHammer);
+    ht.classList.toggle('active-tool',hammerMode);
+  }
   const htd=$id('hammerToolDesktop');
-  if(htd){ htd.classList.toggle('exhausted',hammers<=0); htd.classList.toggle('active-tool',hammerMode); }
+  if(htd){
+    htd.classList.toggle('exhausted',hammers<=0&&!canBuyHammer);
+    htd.classList.toggle('active-tool',hammerMode);
+  }
 }
 
 function _updateToolCount(id, val){
@@ -3626,6 +3630,8 @@ function startGhostDrag(ghost, block, sourceIdx, x, y){
     ghost,
     preview,
     sourceIdx,
+    pointerId:null,
+    captureEl:null,
     anchorOffsetX:ox,
     anchorOffsetY:oy,
     dragLift,
@@ -3638,8 +3644,27 @@ function startGhostDrag(ghost, block, sourceIdx, x, y){
     gridY:null,
   };
 }
+function beginPointerDrag(e, ghost, block, sourceIdx){
+  if(!e) return;
+  if(e.button!==undefined&&e.button!==0) return;
+  if(drag.state!==DragState.IDLE) return;
+  e.preventDefault();
+  const target=e.currentTarget||e.target;
+  if(target&&typeof target.setPointerCapture==='function'&&e.pointerId!=null){
+    try{ target.setPointerCapture(e.pointerId); }catch(_){}
+  }
+  startGhostDrag(ghost, block, sourceIdx, e.clientX, e.clientY);
+  drag.pointerId=(e.pointerId!=null)?e.pointerId:null;
+  drag.captureEl=target||null;
+  document.addEventListener('pointermove',onPMove,{passive:false});
+  document.addEventListener('pointerup',onPUp);
+  document.addEventListener('pointercancel',onPUp);
+}
 
 function cleanupDrag(){
+  if(drag.captureEl&&drag.pointerId!=null&&typeof drag.captureEl.releasePointerCapture==='function'){
+    try{ drag.captureEl.releasePointerCapture(drag.pointerId); }catch(_){}
+  }
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={
@@ -3648,6 +3673,8 @@ function cleanupDrag(){
     ghost:null,
     preview:null,
     sourceIdx:null,
+    pointerId:null,
+    captureEl:null,
     anchorOffsetX:0,
     anchorOffsetY:0,
     dragLift:0,
@@ -3665,19 +3692,14 @@ function cleanupDrag(){
 
 // Ghost drag: keep the whole block floating above the finger so it stays visible.
 function onPDown(e,idx){
-  if(e.button!==undefined&&e.button!==0)return;
-  if(drag.state!==DragState.IDLE)return;
-  e.preventDefault();
   rAC();
   const block=hand[idx];
   if(!block)return;
   const ghost=createGhost(block);
-  startGhostDrag(ghost, block, idx, e.clientX, e.clientY);
+  beginPointerDrag(e, ghost, block, idx);
+  if(drag.state===DragState.IDLE) return;
   activeIdx=idx;
   renderTray();renderBoard();
-  document.addEventListener('pointermove',onPMove,{passive:false});
-  document.addEventListener('pointerup',onPUp);
-  document.addEventListener('pointercancel',onPUp);
 }
 
 function getActiveHoldArea(){
@@ -3691,6 +3713,7 @@ function getActiveHoldArea(){
 }
 
 function onPMove(e){
+  if(drag.pointerId!=null&&e.pointerId!=null&&e.pointerId!==drag.pointerId) return;
   e.preventDefault();if(drag.state===DragState.IDLE||!drag.ghost)return;
   drag.state=DragState.DRAGGING;
   const board=document.getElementById('board');
@@ -3747,6 +3770,7 @@ function onPMove(e){
 }
 
 function onPUp(e){
+  if(drag.pointerId!=null&&e.pointerId!=null&&e.pointerId!==drag.pointerId) return;
   document.removeEventListener('pointermove',onPMove);
   document.removeEventListener('pointerup',onPUp);
   document.removeEventListener('pointercancel',onPUp);
