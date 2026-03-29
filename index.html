@@ -713,9 +713,29 @@ body.combo-screen-flash::before{
   .mob-tool.active-tool{border-color:var(--danger);background:rgba(255,45,85,0.08);animation:toolPulse 1s ease infinite;}
   .mob-tool-top{display:flex;flex-direction:row;align-items:center;gap:5px;width:100%;}
   .mob-tool-name{font-size:0.32rem;color:var(--text);letter-spacing:0.12em;text-align:center;}
-  .mob-tool-count{font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--accent2);line-height:1;}
-  .mob-tool-count.zero{color:var(--muted);}
-  .mob-tool-count.bump{animation:bump 0.22s ease;}
+.mob-tool-count{font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--accent2);line-height:1;}
+.mob-tool-count.zero{color:var(--muted);}
+.mob-tool-count.bump{animation:bump 0.22s ease;}
+.tool-buy-btn{
+  margin-left:4px;
+  padding:2px 6px;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  background:rgba(40,212,255,0.08);
+  color:var(--accent2);
+  font-family:'DM Mono',monospace;
+  font-size:0.42rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  line-height:1.2;
+  cursor:pointer;
+}
+.tool-buy-btn:disabled{
+  opacity:0.35;
+  color:var(--muted2);
+  border-color:var(--border);
+  cursor:not-allowed;
+}
 
   /* Tool pips in mobile */
   .tool-pips{display:flex;gap:3px;margin-top:4px;justify-content:flex-start;width:100%;}
@@ -1029,6 +1049,7 @@ body.combo-screen-flash::before{
                   <div class="tool-svg-wrap" id="undoSVG"></div>
                   <span class="mob-tool-name">UNDO</span>
                   <span class="mob-tool-count" id="undoCount">×1</span>
+                  <button class="tool-buy-btn" id="undoBuyBtn" onclick="buyUndoCharge(event)">Buy</button>
                 </div>
                 <div class="tool-pips" id="undoPips"></div>
               </div>
@@ -1037,6 +1058,7 @@ body.combo-screen-flash::before{
                   <div class="tool-svg-wrap" id="hammerToolSVG"></div>
                   <span class="mob-tool-name">HAMMER</span>
                   <span class="mob-tool-count" id="hammerCount">×2</span>
+                  <button class="tool-buy-btn" id="hammerBuyBtn" onclick="buyHammerCharge(event)">Buy</button>
                 </div>
               </div>
             </div>
@@ -1105,7 +1127,10 @@ body.combo-screen-flash::before{
           <div class="tool-svg-wrap" id="undoSVGDesktop"></div>
           <span class="tool-name">UNDO</span>
         </div>
-        <span class="tool-count" id="undoCountDesktop">×1</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="tool-count" id="undoCountDesktop">×1</span>
+          <button class="tool-buy-btn" id="undoBuyBtnDesktop" onclick="buyUndoCharge(event)">Buy</button>
+        </div>
       </div>
       <div class="tool-pips" id="undoPipsDesktop"></div>
     </div>
@@ -1117,7 +1142,10 @@ body.combo-screen-flash::before{
           <div class="tool-svg-wrap" id="hammerToolSVGDesktop"></div>
           <span class="tool-name">HAMMER</span>
         </div>
-        <span class="tool-count" id="hammerCountDesktop">×2</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="tool-count" id="hammerCountDesktop">×2</span>
+          <button class="tool-buy-btn" id="hammerBuyBtnDesktop" onclick="buyHammerCharge(event)">Buy</button>
+        </div>
       </div>
     </div>
 
@@ -1211,9 +1239,9 @@ body.combo-screen-flash::before{
       <div class="help-heading">Basics</div>
       <div class="help-row"><span class="help-key">Drag / Tap</span><span>Select a block from your hand, then tap a cell to place it</span></div>
       <div class="help-row"><span class="help-key">Hold</span><span>Store one block to use later — tap hold slot to swap</span></div>
-      <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (costs 2 ⬡)</span></div>
-      <div class="help-row"><span class="help-key">Hammer</span><span>Remove one already-placed cell (buy +1 use for 2 ⬡ when empty)</span></div>
-      <div class="help-row"><span class="help-key">Undo</span><span>Start with 1 free use; buy +1 for 3 ⬡</span></div>
+      <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (base 2 ⬡, scales with purchases)</span></div>
+      <div class="help-row"><span class="help-key">Hammer</span><span>Remove one placed cell (buy +1 when empty, base 2 ⬡, scales)</span></div>
+      <div class="help-row"><span class="help-key">Undo</span><span>Start with 1 free use; buy +1 (base 3 ⬡, scales)</span></div>
     </div>
 
     <div class="help-section">
@@ -1274,8 +1302,20 @@ body.combo-screen-flash::before{
 // NAVIGATION
 // ══════════════════════════════════════════════════════
 function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goPlay(){unlockAudio();goScreen('screen-game');newGame();bgmPlay();}
-function restartGame(){document.getElementById('go-overlay').classList.remove('show');newGame();bgmPlay();}
+function goPlay(){
+  unlockAudio();
+  goScreen('screen-game');
+  const save=loadGame();
+  if(save) restoreGame(save);
+  else newGame();
+  bgmPlay();
+}
+function restartGame(){
+  document.getElementById('go-overlay').classList.remove('show');
+  clearSavedGame();
+  newGame();
+  bgmPlay();
+}
 function showLBFromGame(){document.getElementById('go-overlay').classList.remove('show');renderLB('all');goScreen('screen-leaderboard');}
 function showHelp(){document.getElementById('help-overlay').classList.add('show');}
 function hideHelp(){document.getElementById('help-overlay').classList.remove('show');}
@@ -1571,7 +1611,7 @@ function isTutorialLocked(){
 }
 function setupTutorialState(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
-  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;_placedBlocks=[];
+  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
@@ -1696,6 +1736,7 @@ function endTutorial(){
   renderAll();
   setTimeout(()=>{
     tutorial.pendingEnd=false;
+    setMetaState({tutorialDone:true});
     resetTutorialState();
     settings.difficulty='easy';
     newGame();
@@ -2240,12 +2281,14 @@ let grid=[],hand=[],holdBlock=null;
 let score=0,moves=0,errors=0,combo=0,multiplier=1,streak=0;
 let tokens=0,hammers=2,activeIdx=null;
 let undoStack=[],undoCharges=1;
+let toolBought={undoBought:0,hammerBought:0,rerollBought:0};
 const UNDO_GIFT=1;
-const UNDO_BUY_COST=3;
+const UNDO_BASE_COST=3;
+const HAMMER_BASE_COST=2;
+const REROLL_BASE_COST=2;
 const UNDO_PIP_MAX=3;
 const MAX_UNDO_STACK=12;
-const REROLL_COST=2;
-const HAMMER_BUY_COST=2;
+const UNDO_STOCK_CAP=5;
 const HAMMER_STOCK_CAP=5;
 const DRAG_THRESHOLD=5;
 let hammerMode=false,_placedBlocks=[];
@@ -2291,6 +2334,8 @@ let drag={
   gridY:null,
 };
 let _csz=0;
+const SAVE_KEY='sudoku_block_save';
+const META_KEY='sxb_meta';
 
 function initRunMetrics(){
   runMetrics={
@@ -2329,6 +2374,124 @@ function buildRunRecord(filled){
     minPlacements:Number.isFinite(runMetrics.minPlacements)?runMetrics.minPlacements:0,
     last5MovesClearRate:getLast5MovesClearRate(),
   };
+}
+function getMetaState(){
+  try{
+    return JSON.parse(localStorage.getItem(META_KEY)||'{}');
+  }catch(e){
+    return {};
+  }
+}
+function setMetaState(patch){
+  const next={...getMetaState(),...patch};
+  try{localStorage.setItem(META_KEY,JSON.stringify(next));}catch(e){}
+}
+function getToolCost(kind){
+  if(kind==='undo') return UNDO_BASE_COST+Math.floor((toolBought.undoBought||0)/5);
+  if(kind==='hammer') return HAMMER_BASE_COST+Math.floor((toolBought.hammerBought||0)/5);
+  return REROLL_BASE_COST+Math.floor((toolBought.rerollBought||0)/5);
+}
+function cloneBlock(block){
+  if(!block) return null;
+  return {
+    name:block.name,
+    tier:block.tier,
+    color:block.color,
+    cells:block.cells?block.cells.map(([r,c,v])=>[r,c,v]):[],
+    used:!!block.used,
+    _tutorial:!!block._tutorial,
+    _forced:!!block._forced,
+    pos:block.pos?block.pos.map(([r,c])=>[r,c]):null,
+  };
+}
+function getGameState(){
+  return {
+    version:1,
+    board:grid.map(row=>[...row]),
+    hand:hand.map(cloneBlock),
+    hold:cloneBlock(holdBlock),
+    placed:_placedBlocks.map(cloneBlock),
+    score,
+    moves,
+    combo,
+    errors,
+    multiplier,
+    streak,
+    tokens,
+    hammers,
+    undoCharges,
+    toolBought:{...toolBought},
+    activeIdx,
+    settings:{...settings},
+    meta:{
+      tutorialDone:!!getMetaState().tutorialDone,
+      soundOn:!!settings.sfx,
+    },
+  };
+}
+function saveGame(){
+  if(tutorial.active) return;
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify(getGameState()));
+  }catch(e){}
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+function clearSavedGame(){
+  try{localStorage.removeItem(SAVE_KEY);}catch(e){}
+}
+function restoreGame(save){
+  if(!save||!Array.isArray(save.board)) return newGame();
+  resetTutorialState();
+  document.getElementById('go-overlay').classList.remove('show');
+  document.getElementById('pause-overlay').classList.remove('show');
+
+  grid=save.board.map(row=>Array.isArray(row)?row.slice(0,9):Array(9).fill(0)).slice(0,9);
+  while(grid.length<9) grid.push(Array(9).fill(0));
+  hand=(save.hand||[]).map(cloneBlock).filter(Boolean);
+  holdBlock=cloneBlock(save.hold);
+  _placedBlocks=(save.placed||[]).map(cloneBlock).filter(Boolean);
+
+  score=Number(save.score)||0;
+  moves=Number(save.moves)||0;
+  combo=Number(save.combo)||0;
+  errors=Number(save.errors)||0;
+  multiplier=Number(save.multiplier)||1;
+  streak=Number(save.streak)||0;
+  tokens=Number(save.tokens)||0;
+  hammers=Number(save.hammers)||2;
+  undoCharges=Number.isFinite(Number(save.undoCharges))?Math.max(0,Number(save.undoCharges)):UNDO_GIFT;
+  toolBought={
+    undoBought:Number(save.toolBought?.undoBought)||0,
+    hammerBought:Number(save.toolBought?.hammerBought)||0,
+    rerollBought:Number(save.toolBought?.rerollBought)||0,
+  };
+  activeIdx=(typeof save.activeIdx==='number')?save.activeIdx:null;
+  hammerMode=false;
+
+  if(drag.ghost) drag.ghost.remove();
+  if(drag.preview) drag.preview.remove();
+  drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  clearSnap();
+  _csz=0;
+
+  if(save.settings&&typeof save.settings==='object'){
+    settings={...settings,...save.settings};
+    applySettingsUI();
+  }
+  if(save.meta&&typeof save.meta==='object'){
+    setMetaState({tutorialDone:!!save.meta.tutorialDone});
+  }
+  initRunMetrics();
+  updateRunMinPlacements();
+  renderAll();
 }
 function recordRunAtGameOver(filled){
   if(tutorial.active) return;
@@ -2625,7 +2788,7 @@ function newGame(){
   document.getElementById('go-overlay').classList.remove('show');
   document.getElementById('pause-overlay').classList.remove('show');
   grid=Array.from({length:9},()=>Array(9).fill(0));
-  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;_placedBlocks=[];
+  hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
@@ -2636,7 +2799,16 @@ function newGame(){
 // ══════════════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════════════
-function renderAll(){renderBoard();renderTray();renderHold();updateStats();updateUndoUI();applyTutorialHighlights();updateTutorialFX();}
+function renderAll(){
+  renderBoard();
+  renderTray();
+  renderHold();
+  updateStats();
+  updateUndoUI();
+  applyTutorialHighlights();
+  updateTutorialFX();
+  saveGame();
+}
 
 function renderBoard(){
   const bd=document.getElementById('board');bd.innerHTML='';
@@ -2704,8 +2876,6 @@ function renderTray(){
         beginPointerDrag(e, ghost, meta.block, meta.sourceIdx, p);
         if(drag.state===DragState.IDLE) return;
         activeIdx=meta.sourceIdx;
-        renderTray();
-        renderBoard();
       },
       onMove:(_,e)=>{
         onPMove(e);
@@ -2752,7 +2922,8 @@ function renderTray(){
   });
   const rem=hand.filter(b=>b&&!b.used).length;
   $id('lastWarn').textContent=(rem===1&&!holdBlock)?'⚠ LAST BLOCK!':'';
-  const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<REROLL_COST;
+  const rrCost=getToolCost('reroll');
+  const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<rrCost;
   // Highlight both hold areas when a block is selected
   const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
   const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
@@ -3076,33 +3247,45 @@ function updateStats(){
   // Tokens — both mobile and desktop
   const td=$id('tokensDisp');if(td)td.textContent=tokens;
   const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
-  const rc=$id('rerollCost');if(rc)rc.textContent=`${REROLL_COST}⬡`;
+  const rerollCost=getToolCost('reroll');
+  const rc=$id('rerollCost');if(rc)rc.textContent=`${rerollCost}⬡`;
 
   // Hammer count / buy affordance — mobile + desktop
-  const canBuyHammer=(hammers<=0&&tokens>=HAMMER_BUY_COST&&!(tutorial.active&&tutorial.phase!==4));
-  const hammerLabel=hammers>0?`×${hammers}`:(canBuyHammer?`BUY ${HAMMER_BUY_COST}⬡`:'×0');
+  const hammerCost=getToolCost('hammer');
+  const canBuyHammer=tokens>=hammerCost&&hammers<HAMMER_STOCK_CAP&&!(tutorial.active&&tutorial.phase!==4);
+  const hammerLabel=`×${hammers}`;
   const hc=$id('hammerCount');
   if(hc){
     hc.textContent=hammerLabel;
-    hc.classList.toggle('zero',hammers<=0&&!canBuyHammer);
+    hc.classList.toggle('zero',hammers<=0);
     hc.classList.toggle('bump',false);
   }
   const hcd=$id('hammerCountDesktop');
   if(hcd){
     hcd.textContent=hammerLabel;
-    hcd.classList.toggle('zero',hammers<=0&&!canBuyHammer);
+    hcd.classList.toggle('zero',hammers<=0);
     hcd.classList.toggle('bump',false);
+  }
+  const hb=$id('hammerBuyBtn');
+  if(hb){
+    hb.disabled=!canBuyHammer;
+    hb.title=`Buy +1 hammer (${hammerCost}⬡)`;
+  }
+  const hbd=$id('hammerBuyBtnDesktop');
+  if(hbd){
+    hbd.disabled=!canBuyHammer;
+    hbd.title=`Buy +1 hammer (${hammerCost}⬡)`;
   }
 
   // Hammer tool state — mobile + desktop
   const ht=$id('hammerTool');
   if(ht){
-    ht.classList.toggle('exhausted',hammers<=0&&!canBuyHammer);
+    ht.classList.toggle('exhausted',hammers<=0);
     ht.classList.toggle('active-tool',hammerMode);
   }
   const htd=$id('hammerToolDesktop');
   if(htd){
-    htd.classList.toggle('exhausted',hammers<=0&&!canBuyHammer);
+    htd.classList.toggle('exhausted',hammers<=0);
     htd.classList.toggle('active-tool',hammerMode);
   }
 }
@@ -3119,25 +3302,36 @@ function _updateToolCount(id, val){
 function updateUndoUI(){
   const canUndo=undoCharges>0&&undoStack.length>0;
   const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
-  const canBuyUndo=undoCharges<=0&&tokens>=UNDO_BUY_COST&&undoStack.length>0&&!(tutorial.active&&tutorial.phase!==3);
+  const undoCost=getToolCost('undo');
+  const canBuyUndo=tokens>=undoCost&&undoCharges<UNDO_STOCK_CAP&&(tutorialUndoOnly||!isTutorialLocked());
   const remaining=undoCharges;
 
   // Mobile undo tool
   const ut=$id('undoTool');
-  if(ut) ut.classList.toggle('exhausted',!((canUndo||canBuyUndo)&&(tutorialUndoOnly||!isTutorialLocked())));
+  if(ut) ut.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
   const uc=$id('undoCount');
   if(uc){
-    uc.textContent=remaining>0?`×${remaining}`:(canBuyUndo?`BUY ${UNDO_BUY_COST}⬡`:'×0');
-    uc.classList.toggle('zero',remaining<=0&&!canBuyUndo);
+    uc.textContent=`×${remaining}`;
+    uc.classList.toggle('zero',remaining<=0);
+  }
+  const ub=$id('undoBuyBtn');
+  if(ub){
+    ub.disabled=!canBuyUndo;
+    ub.title=`Buy +1 undo (${undoCost}⬡)`;
   }
 
   // Desktop undo tool
   const utd=$id('undoToolDesktop');
-  if(utd) utd.classList.toggle('exhausted',!((canUndo||canBuyUndo)&&(tutorialUndoOnly||!isTutorialLocked())));
+  if(utd) utd.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
   const ucd=$id('undoCountDesktop');
   if(ucd){
-    ucd.textContent=remaining>0?`×${remaining}`:(canBuyUndo?`BUY ${UNDO_BUY_COST}⬡`:'×0');
-    ucd.classList.toggle('zero',remaining<=0&&!canBuyUndo);
+    ucd.textContent=`×${remaining}`;
+    ucd.classList.toggle('zero',remaining<=0);
+  }
+  const ubd=$id('undoBuyBtnDesktop');
+  if(ubd){
+    ubd.disabled=!canBuyUndo;
+    ubd.title=`Buy +1 undo (${undoCost}⬡)`;
   }
 
   // Pips — mobile
@@ -3294,8 +3488,10 @@ function swapHold(){
 }
 function doReroll(){
   if(isTutorialLocked()) return;
-  if(tokens<REROLL_COST)return;
-  tokens-=REROLL_COST;
+  const cost=getToolCost('reroll');
+  if(tokens<cost)return;
+  tokens-=cost;
+  toolBought.rerollBought++;
   const rerollType=getRerollType();
   hand=buildRerollHand(rerollType);
   while(hand.length<3){
@@ -3309,18 +3505,49 @@ function doReroll(){
   renderAll();
   if(count===0) checkGameOver();
 }
+function buyHammerCharge(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if(tutorial.active&&tutorial.phase!==4){
+    handleTutorialLockedAction('教程后面会教你锤子');
+    return;
+  }
+  if(hammers>=HAMMER_STOCK_CAP) return;
+  const cost=getToolCost('hammer');
+  if(tokens<cost) return;
+  tokens-=cost;
+  toolBought.hammerBought++;
+  hammers++;
+  animateTokenHUD();
+  renderAll();
+}
+function buyUndoCharge(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
+  if(isTutorialLocked()&&!tutorialUndoOnly){
+    handleTutorialLockedAction('教程后面会教你撤回');
+    return;
+  }
+  if(undoCharges>=UNDO_STOCK_CAP) return;
+  const cost=getToolCost('undo');
+  if(tokens<cost) return;
+  tokens-=cost;
+  toolBought.undoBought++;
+  undoCharges++;
+  animateTokenHUD();
+  renderAll();
+}
 function activateHammer(){
   if(tutorial.active&&tutorial.phase!==4){
     handleTutorialLockedAction('教程后面会教你锤子');
     return;
   }
-  if(hammers<=0){
-    if(tokens<HAMMER_BUY_COST) return;
-    if(hammers>=HAMMER_STOCK_CAP) return;
-    tokens-=HAMMER_BUY_COST;
-    hammers++;
-    animateTokenHUD();
-  }
+  if(hammers<=0)return;
   hammerMode=!hammerMode;
   activeIdx=null;
   applyHammerMode();
@@ -3673,12 +3900,6 @@ function undoPlace(){
   const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
   if(isTutorialLocked()&&!tutorialUndoOnly) return;
   if(undoStack.length===0)return;
-  if(undoCharges<=0){
-    if(tokens<UNDO_BUY_COST) return;
-    tokens-=UNDO_BUY_COST;
-    undoCharges++;
-    animateTokenHUD();
-  }
   if(undoCharges<=0) return;
   const snap=undoStack.pop();
   grid=snap.gs; snap.block.used=false; snap.block.pos=null;
@@ -3771,7 +3992,7 @@ function startGhostDrag(ghost, block, sourceIdx, x, y){
 }
 function beginPointerDrag(e, ghost, block, sourceIdx, point=null){
   if(!e) return;
-  if(e.button!==undefined&&e.button!==0) return;
+  if(e.type==='pointerdown'&&e.button!==undefined&&e.button!==0) return;
   if(drag.state!==DragState.IDLE) return;
   if(e.cancelable) e.preventDefault();
   const target=e.currentTarget||e.target;
@@ -3957,6 +4178,7 @@ document.addEventListener('keydown',e=>{
 loadSettings();
 loadVol();
 document.body.classList.add('zoo-mode');
+window.addEventListener('beforeunload',saveGame);
 function handleFirstAudioUnlock(){
   unlockAudio();
   document.removeEventListener('pointerdown',handleFirstAudioUnlock);
