@@ -9,25 +9,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap');
 
 :root {
-  --bg:       #07070d;
-  --surface:  #0d0d18;
-  --surface2: #12121f;
-  --border:   #1e1e32;
-  --border2:  #2a2a42;
-  --text:     #dde0f0;
-  --muted:    #3d3d58;
-  --muted2:   #5a5a7a;
-  --accent:   #ff6030;
+  --bg:       #FDF6E3;
+  --board:    #F2EAD3;
+  --cell:     #E8DFC7;
+  --surface:  #EFE6CF;
+  --surface2: #F5EBD8;
+  --border:   #D6CCB2;
+  --border2:  #CDBFA1;
+  --text:     #2B2B2B;
+  --muted:    #8A816F;
+  --muted2:   #6B6455;
+  --accent:   #3AE8EB;
   --accent2:  #28d4ff;
-  --accent3:  #9eff3b;
-  --warn:     #ffc800;
-  --danger:   #ff2d55;
+  --accent3:  #4CAF50;
+  --warn:     #FF9800;
+  --danger:   #E53935;
   --t1:#9eff3b; --t2:#ff6030; --t3:#ff2d55;
-  --glo:#15070d; --glb:rgba(40,212,255,0.1); --glg:rgba(158,255,59,0.1);
+  --glo:#f7ecda; --glb:rgba(58,232,235,0.12); --glg:rgba(76,175,80,0.12);
+  --scanline: rgba(43,43,43,0.03);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow-x:hidden;}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px);}
+body{
+  transition:background-color 0.3s ease,color 0.3s ease;
+}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,var(--scanline) 3px,var(--scanline) 6px);}
+body[data-theme="dark"]{
+  --bg:#0B0F1A;
+  --board:#12182A;
+  --cell:#1A2238;
+  --surface:#151B2E;
+  --surface2:#1A2238;
+  --border:#2A3350;
+  --border2:#344064;
+  --text:#EAEAF0;
+  --muted:#66708D;
+  --muted2:#9AA3C0;
+  --accent:#3AE8EB;
+  --accent2:#3AE8EB;
+  --accent3:#66BB6A;
+  --warn:#FFA726;
+  --danger:#EF5350;
+  --glo:#0f1422;
+  --glb:rgba(58,232,235,0.14);
+  --glg:rgba(102,187,106,0.14);
+  --scanline: rgba(255,255,255,0.02);
+}
 html{
   -webkit-tap-highlight-color: transparent;
 }
@@ -62,13 +89,35 @@ body, button, input, .tray-slot, .hold-preview, .hold-slot, #board, .cell{
 .theme-opt+.theme-opt{border-left:1px solid var(--border2);}
 .theme-opt.active{background:rgba(212,169,255,0.12);color:#d4a9ff;}
 .theme-opt .t-icon{font-size:0.9rem;line-height:1;}
+.lang-switch{display:flex;align-items:center;gap:6px;}
+.lang-btn{
+  min-width:42px;
+  padding:4px 8px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted2);
+  font-family:'DM Mono',monospace;
+  font-size:0.46rem;
+  letter-spacing:0.08em;
+  cursor:pointer;
+  text-transform:uppercase;
+}
+.lang-btn.active{
+  border-color:var(--accent2);
+  color:var(--accent2);
+  background:var(--glb);
+}
 
-/* Zoo mode: softer board bg */
-body.zoo-mode .cell{background:#1a1228;}
-body.zoo-mode #board{background:#2a1f38;border-color:#3d2d55;}
-body.zoo-mode .cell[data-col="3"],body.zoo-mode .cell[data-col="6"]{border-left-color:#3d2d55;}
-body.zoo-mode .cell[data-row="3"],body.zoo-mode .cell[data-row="6"]{border-top-color:#3d2d55;}
-body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
+/* Zoo mode: keep animals readable on both light/dark themes */
+body.zoo-mode .cell.conflict{background:rgba(214,69,69,0.2)!important;}
+body.zoo-mode .cell svg,
+body.zoo-mode .bm-cell svg{
+  filter:drop-shadow(0 1px 0 rgba(255,255,255,0.6));
+}
+body[data-theme="dark"].zoo-mode .cell svg,
+body[data-theme="dark"].zoo-mode .bm-cell svg{
+  filter:drop-shadow(0 0 6px rgba(255,255,255,0.35));
+}
 
 /* SVG in cell */
 .cell svg{width:72%;height:72%;display:block;pointer-events:none;}
@@ -164,10 +213,10 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 /* board */
 .board-wrap{display:flex;flex-direction:column;align-items:center;}
 .board-container{position:relative;flex-shrink:0;}
-#board{display:grid;grid-template-columns:repeat(9,1fr);width:450px;height:450px;border:1.5px solid var(--border2);background:var(--border);gap:1px;position:relative;z-index:1;box-shadow:0 0 50px rgba(0,0,0,0.7);touch-action:none;}
+#board{display:grid;grid-template-columns:repeat(9,1fr);width:450px;height:450px;border:1.5px solid var(--border2);background:var(--board);gap:1px;position:relative;z-index:1;box-shadow:0 0 50px rgba(0,0,0,0.35);touch-action:none;transition:background-color 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease;}
 @media(max-width:520px){#board{width:340px;height:340px}}
 @media(max-width:380px){#board{width:300px;height:300px}}
-.cell{background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.05em;position:relative;overflow:hidden;aspect-ratio:1/1;min-width:0;min-height:0;transition:background 0.1s;cursor:default;user-select:none;}
+.cell{background:var(--cell);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.05em;position:relative;overflow:hidden;aspect-ratio:1/1;min-width:0;min-height:0;transition:background-color 0.16s ease,box-shadow 0.16s ease;cursor:default;user-select:none;}
 @media(max-width:520px){.cell{font-size:1rem}}
 @media(max-width:380px){.cell{font-size:0.85rem}}
 .cell[data-col="3"],.cell[data-col="6"]{border-left:1.5px solid var(--border2);}
@@ -213,6 +262,10 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
 .combo-text.high{color:var(--warn);text-shadow:0 0 22px rgba(255,200,0,0.48);}
 .combo-text.box{color:var(--accent);text-shadow:0 0 20px rgba(255,96,48,0.44);}
 .combo-text.box.high{color:var(--warn);text-shadow:0 0 24px rgba(255,200,0,0.52);}
+body[data-theme="dark"] .combo-text.high{
+  color:#3AE8EB;
+  text-shadow:0 0 10px rgba(58,232,235,0.7);
+}
 @keyframes comboTextPop{
   0%{transform:translate(-50%,-50%) scale(0.5);opacity:0;}
   50%{transform:translate(-50%,-50%) scale(1.16);opacity:1;}
@@ -234,6 +287,37 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   20%{transform:translate(-50%,-50%) translateY(-6px) scale(1.2);opacity:1;}
   100%{transform:translate(-50%,-50%) translateY(-46px) scale(1);opacity:0;}
 }
+.token-pop{
+  position:fixed;
+  left:0;
+  top:0;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  z-index:100041;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#1a1300;
+  background:radial-gradient(circle at 35% 35%, #fff8b8, #ffd700 55%, #d89a00);
+  box-shadow:0 0 12px rgba(255,200,0,0.62);
+  transform:translate(-50%,-50%) scale(0.5);
+  opacity:0;
+  transition:transform 0.2s ease,opacity 0.2s ease,left 0.4s ease-in,top 0.4s ease-in;
+}
+body[data-theme="dark"] .token-pop{
+  box-shadow:0 0 12px #3AE8EB;
+}
+.token-pop::before{
+  content:'⬡';
+  font-size:10px;
+  line-height:1;
+}
+.token-pop.show{
+  transform:translate(-50%,-50%) scale(1.3);
+  opacity:1;
+}
 .token-particle{
   position:fixed;
   width:8px;
@@ -244,7 +328,7 @@ body.zoo-mode .cell.conflict{background:rgba(255,100,100,0.15)!important;}
   background:radial-gradient(circle at 35% 35%, #fff8b8, #ffd700 55%, #d89a00);
   box-shadow:0 0 8px rgba(255,200,0,0.55);
 }
-.token-pop{
+.token-hud-pop{
   animation:tokenHudPop 0.25s ease;
 }
 @keyframes tokenHudPop{
@@ -270,6 +354,16 @@ body.combo-screen-flash::before{
 .cell.conflict{color:var(--danger)!important;background:rgba(255,45,85,0.09)!important;}
 .cell.drop-valid{background:rgba(40,212,255,0.13);outline:1.5px solid var(--accent2);}
 .cell.drop-invalid{background:rgba(255,45,85,0.11);outline:1.5px solid var(--danger);}
+.cell:hover{
+  outline:2px solid var(--accent2);
+  outline-offset:-2px;
+}
+body[data-theme="dark"] .cell:hover{
+  box-shadow:0 0 8px rgba(58,232,235,0.5) inset;
+}
+body[data-theme="dark"] #board{
+  box-shadow:0 0 50px rgba(0,0,0,0.7);
+}
 .cell.tutorial-target{
   animation:tutorialPulse 1s ease-in-out infinite;
 }
@@ -323,6 +417,25 @@ body.combo-screen-flash::before{
   display:none;
 }
 .tutorial-progress.show{display:block;}
+.loop-hint{
+  margin-top:8px;
+  min-height:20px;
+  padding:4px 10px;
+  border:1px solid rgba(58,232,235,0.45);
+  background:rgba(58,232,235,0.08);
+  color:var(--accent2);
+  font-size:0.48rem;
+  letter-spacing:0.06em;
+  text-align:center;
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity 0.2s ease,transform 0.2s ease;
+  pointer-events:none;
+}
+.loop-hint.show{
+  opacity:1;
+  transform:translateY(0);
+}
 .tutorial-layer{
   position:fixed;
   inset:0;
@@ -446,6 +559,17 @@ body.combo-screen-flash::before{
   100% { transform: scale(0);    opacity: 0; }
 }
 .cell-smash { animation: cellSmash 0.28s cubic-bezier(0.4,0,0.8,0.6) forwards; }
+.cell.hit{
+  animation:cellHit 0.16s ease-out;
+}
+body[data-theme="dark"] .cell.hit{
+  box-shadow:0 0 10px rgba(58,232,235,0.6);
+}
+@keyframes cellHit{
+  0%{transform:scale(1);filter:brightness(1);}
+  40%{transform:scale(1.12);filter:brightness(1.9);}
+  100%{transform:scale(1);filter:brightness(1);}
+}
 
 /* Hammer button pulsing when active */
 @keyframes hammerBtnPulse {
@@ -467,6 +591,28 @@ body.combo-screen-flash::before{
   transform: translate(-8px, -8px);
   display: none;
   transition: transform 0.05s;
+}
+#hammer-cursor.strike{
+  animation:hammerStrike 0.18s cubic-bezier(0.2,0.9,0.2,1);
+}
+@keyframes hammerStrike{
+  0%{transform:translate(-8px,-8px) scale(1.18) rotate(-22deg);}
+  45%{transform:translate(-2px,-2px) scale(0.92) rotate(8deg);}
+  100%{transform:translate(-8px,-8px) scale(1) rotate(-15deg);}
+}
+.hammer-impact-ring{
+  position:fixed;
+  pointer-events:none;
+  z-index:10020;
+  border-radius:50%;
+  border:2px solid rgba(255,220,120,0.85);
+  box-shadow:0 0 24px rgba(255,180,80,0.4);
+}
+.hammer-impact-flash{
+  position:fixed;
+  pointer-events:none;
+  z-index:10021;
+  border-radius:6px;
 }
 .last-block-warn{font-size:0.56rem;color:var(--warn);letter-spacing:0.12em;animation:blink 0.8s infinite;text-align:center;margin-top:5px;min-height:1.1em;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
@@ -507,6 +653,21 @@ body.combo-screen-flash::before{
 .score-bump{animation:scoreBump 0.25s ease;}
 .mult-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;}
 .mult-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent3));border-radius:2px;transition:width 0.3s ease;}
+.mult-fill.mult-high{
+  animation:multBarPulse 0.6s ease-in-out infinite alternate;
+}
+.score-bar-num.mult-high{
+  text-shadow:0 0 10px rgba(58,232,235,0.7);
+  animation:multTextPulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes multBarPulse{
+  from{filter:brightness(1);}
+  to{filter:brightness(1.35);}
+}
+@keyframes multTextPulse{
+  from{transform:scale(1);}
+  to{transform:scale(1.05);}
+}
 .mobile-section-label{display:none;}
 
 /* buttons */
@@ -598,7 +759,7 @@ body.combo-screen-flash::before{
   .topbar-right{
     gap:4px;
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
   }
   .topbar-btn{
     font-size:0.36rem;
@@ -754,7 +915,7 @@ body.combo-screen-flash::before{
 
 @media(max-width:380px){
   .topbar-logo{font-size:0.9rem;}
-  .topbar-right{grid-template-columns:1fr 1fr 1fr;}
+  .topbar-right{grid-template-columns:1fr 1fr 1fr 1fr;}
   .topbar-btn{padding:5px 4px;font-size:0.32rem;}
   .score-bar-num{font-size:0.95rem;}
   .mob-tool-count{font-size:0.9rem;}
@@ -914,14 +1075,14 @@ body.combo-screen-flash::before{
     <div class="logo-mark menu-logo"><em>数独</em> <span class="x">×</span> BLOCK</div>
     <div class="menu-tagline">Constraint Survival Puzzle</div>
     <div class="menu-meta">
-      <span>Difficulty</span>
+      <span data-i18n="menu.difficulty">Difficulty</span>
       <span class="menu-meta-pill" id="menuPlayDiff">Easy</span>
     </div>
     <div class="menu-btns">
-      <button class="menu-btn primary" onclick="goPlay()"><span class="bi">▶</span>Play</button>
-      <button class="menu-btn tutorial" onclick="startTutorial()"><span class="bi">✦</span>Tutorial</button>
-      <button class="menu-btn" onclick="goScreen('screen-leaderboard');renderLB('all')"><span class="bi">🏆</span>Leaderboard</button>
-      <button class="menu-btn" onclick="goScreen('screen-settings')"><span class="bi">⚙</span>Settings</button>
+      <button class="menu-btn primary" onclick="goPlay()"><span class="bi">▶</span><span data-i18n="menu.play">Play</span></button>
+      <button class="menu-btn tutorial" onclick="startTutorial()"><span class="bi">✦</span><span data-i18n="menu.tutorial">Tutorial</span></button>
+      <button class="menu-btn" onclick="goScreen('screen-leaderboard');renderLB('all')"><span class="bi">🏆</span><span data-i18n="menu.leaderboard">Leaderboard</span></button>
+      <button class="menu-btn" onclick="goScreen('screen-settings')"><span class="bi">⚙</span><span data-i18n="menu.settings">Settings</span></button>
     </div>
   </div>
   <div class="menu-ver">v12 · 数独 × BLOCK</div>
@@ -931,59 +1092,66 @@ body.combo-screen-flash::before{
 
 <div class="screen" id="screen-settings">
   <div class="sub-header">
-    <button class="back-btn" onclick="goScreen('screen-menu')">← Back</button>
-    <div class="sub-title">Settings</div>
+    <button class="back-btn" onclick="goScreen('screen-menu')">← <span data-i18n="common.back">Back</span></button>
+    <div class="sub-title" data-i18n="menu.settings">Settings</div>
   </div>
   <div class="scard">
-    <div class="scard-title">Difficulty</div>
+    <div class="scard-title" data-i18n="settings.difficulty">Difficulty</div>
     <div class="diff-grid">
-      <button class="diff-opt sel" data-diff="easy" onclick="selDiff(this)"><span class="di">🌱</span><span>Easy</span><span class="dd">More small blocks</span></button>
-      <button class="diff-opt" data-diff="medium" onclick="selDiff(this)"><span class="di">⚡</span><span>Medium</span><span class="dd">Balanced</span></button>
-      <button class="diff-opt" data-diff="hard" onclick="selDiff(this)"><span class="di">🔥</span><span>Hard</span><span class="dd">Bigger blocks</span></button>
-      <button class="diff-opt" data-diff="hell" onclick="selDiff(this)"><span class="di">💀</span><span>Hell</span><span class="dd">Good luck</span></button>
+      <button class="diff-opt sel" data-diff="easy" onclick="selDiff(this)"><span class="di">🌱</span><span data-i18n="menu.diff.easy">Easy</span><span class="dd" data-i18n="settings.diff.easy.desc">More small blocks</span></button>
+      <button class="diff-opt" data-diff="medium" onclick="selDiff(this)"><span class="di">⚡</span><span data-i18n="menu.diff.medium">Medium</span><span class="dd" data-i18n="settings.diff.medium.desc">Balanced</span></button>
+      <button class="diff-opt" data-diff="hard" onclick="selDiff(this)"><span class="di">🔥</span><span data-i18n="menu.diff.hard">Hard</span><span class="dd" data-i18n="settings.diff.hard.desc">Bigger blocks</span></button>
+      <button class="diff-opt" data-diff="hell" onclick="selDiff(this)"><span class="di">💀</span><span data-i18n="menu.diff.hell">Hell</span><span class="dd" data-i18n="settings.diff.hell.desc">Good luck</span></button>
     </div>
   </div>
   <div class="scard">
-    <div class="scard-title">Audio &amp; Display</div>
+    <div class="scard-title" data-i18n="settings.audioDisplay">Audio &amp; Display</div>
     <div class="tog-row">
-      <div><div class="tog-label">Display Theme</div><div class="tog-desc">Switch between numbers and zoo icons</div></div>
-      <div class="theme-switch" title="Switch display theme">
+      <div><div class="tog-label" data-i18n="settings.displayTheme">Display Theme</div><div class="tog-desc" data-i18n="settings.displayTheme.desc">Switch between numbers and zoo icons</div></div>
+      <div class="theme-switch" title="Switch display theme" data-i18n-title="settings.displayTheme.title">
         <button class="theme-opt" id="themeNum" onclick="setTheme('NUM')"><span class="t-icon">🔢</span>123</button>
         <button class="theme-opt active" id="themeZoo" onclick="setTheme('ZOO')"><span class="t-icon">🐾</span>ZOO</button>
       </div>
     </div>
     <div class="tog-row">
-      <div><div class="tog-label">Sound Effects</div><div class="tog-desc">Placement, clears, combos</div></div>
+      <div><div class="tog-label" data-i18n="settings.language">Language</div><div class="tog-desc">中文 / English</div></div>
+      <div class="lang-switch">
+        <button class="lang-btn" id="langZhBtn" onclick="setLang('zh')">中文</button>
+        <button class="lang-btn" id="langEnBtn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <div class="tog-row">
+      <div><div class="tog-label" data-i18n="settings.sfx">Sound Effects</div><div class="tog-desc" data-i18n="settings.sfx.desc">Placement, clears, combos</div></div>
       <label class="toggle"><input type="checkbox" id="set-sfx" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
     </div>
     <div class="tog-row">
-      <div><div class="tog-label">Show Conflicts</div><div class="tog-desc">Highlight duplicates in red</div></div>
+      <div><div class="tog-label" data-i18n="settings.conflicts">Show Conflicts</div><div class="tog-desc" data-i18n="settings.conflicts.desc">Highlight duplicates in red</div></div>
       <label class="toggle"><input type="checkbox" id="set-conflicts" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
     </div>
     <div class="tog-row">
-      <div><div class="tog-label">Score Popups</div><div class="tog-desc">Floating +pts on placement</div></div>
+      <div><div class="tog-label" data-i18n="settings.popups">Score Popups</div><div class="tog-desc" data-i18n="settings.popups.desc">Floating +pts on placement</div></div>
       <label class="toggle"><input type="checkbox" id="set-pops" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
     </div>
   </div>
-  <button class="save-btn" onclick="saveSettings()">✓ Save &amp; Close</button>
+  <button class="save-btn" onclick="saveSettings()">✓ <span data-i18n="settings.saveClose">Save &amp; Close</span></button>
 </div>
 
 <!-- ══ LEADERBOARD ══ -->
 
 <div class="screen" id="screen-leaderboard">
   <div class="sub-header">
-    <button class="back-btn" onclick="goScreen('screen-menu')">← Back</button>
-    <div class="sub-title">🏆 Leaderboard</div>
+    <button class="back-btn" onclick="goScreen('screen-menu')">← <span data-i18n="common.back">Back</span></button>
+    <div class="sub-title">🏆 <span data-i18n="menu.leaderboard">Leaderboard</span></div>
   </div>
   <div class="lb-tabs">
-    <button class="lb-tab active" data-diff="all" onclick="lbTab(this)">All</button>
-    <button class="lb-tab" data-diff="easy" onclick="lbTab(this)">Easy</button>
-    <button class="lb-tab" data-diff="medium" onclick="lbTab(this)">Med</button>
-    <button class="lb-tab" data-diff="hard" onclick="lbTab(this)">Hard</button>
-    <button class="lb-tab" data-diff="hell" onclick="lbTab(this)">Hell</button>
+    <button class="lb-tab active" data-diff="all" onclick="lbTab(this)" data-i18n="lb.tab.all">All</button>
+    <button class="lb-tab" data-diff="easy" onclick="lbTab(this)" data-i18n="menu.diff.easy">Easy</button>
+    <button class="lb-tab" data-diff="medium" onclick="lbTab(this)" data-i18n="menu.diff.medium">Medium</button>
+    <button class="lb-tab" data-diff="hard" onclick="lbTab(this)" data-i18n="menu.diff.hard">Hard</button>
+    <button class="lb-tab" data-diff="hell" onclick="lbTab(this)" data-i18n="menu.diff.hell">Hell</button>
   </div>
   <div class="lb-list" id="lbList"></div>
-  <button class="clear-lb-btn" onclick="clearLB()">🗑 Clear All Records</button>
+  <button class="clear-lb-btn" onclick="clearLB()">🗑 <span data-i18n="lb.clear">Clear All Records</span></button>
 </div>
 
 <!-- ══ GAME ══ -->
@@ -994,9 +1162,10 @@ body.combo-screen-flash::before{
   <div class="game-topbar">
     <div class="logo-mark topbar-logo"><em>数独</em> <span class="x">×</span> BLOCK</div>
     <div class="topbar-right">
-      <button class="topbar-btn" onclick="showVolume()" id="volumeBtn">🔊 Vol</button>
-      <button class="topbar-btn" onclick="showHelp()" style="border-color:var(--accent2);color:var(--accent2);">? Help</button>
-      <button class="topbar-btn" onclick="showGameSettings()">⚙ Settings</button>
+      <button class="topbar-btn" onclick="toggleVisualTheme()" id="themeModeBtn">🌙 Dark</button>
+      <button class="topbar-btn" onclick="showVolume()" id="volumeBtn">🔊 <span data-i18n="top.vol">Vol</span></button>
+      <button class="topbar-btn" onclick="showHelp()" style="border-color:var(--accent2);color:var(--accent2);">? <span data-i18n="top.help">Help</span></button>
+      <button class="topbar-btn" onclick="showGameSettings()">⚙ <span data-i18n="menu.settings">Settings</span></button>
     </div>
   </div>
   <div class="game-layout">
@@ -1004,30 +1173,30 @@ body.combo-screen-flash::before{
 
       <!-- SCORE BAR -->
       <div class="score-bar-wrap">
-        <div class="mobile-section-label">Board</div>
+        <div class="mobile-section-label" data-i18n="game.board">Board</div>
         <div class="score-bar">
           <div class="score-bar-item">
             <div class="score-bar-num" id="scoreDisp">0</div>
-            <div class="score-bar-lbl">Score</div>
+            <div class="score-bar-lbl" data-i18n="score.score">Score</div>
           </div>
           <div class="score-bar-divider"></div>
           <div class="score-bar-item">
             <div class="score-bar-num accent2" id="movesDisp">0</div>
-            <div class="score-bar-lbl">Moves</div>
+            <div class="score-bar-lbl" data-i18n="score.moves">Moves</div>
           </div>
           <div class="score-bar-divider"></div>
           <div class="score-bar-item">
             <div class="score-bar-num warn" id="comboDisp">0</div>
-            <div class="score-bar-lbl">Combo</div>
+            <div class="score-bar-lbl" data-i18n="score.combo">Combo</div>
           </div>
           <div class="score-bar-divider"></div>
           <div class="score-bar-item">
             <div class="score-bar-num danger" id="errorsDisp">0</div>
-            <div class="score-bar-lbl">Errors</div>
+            <div class="score-bar-lbl" data-i18n="score.penalty">Penalty</div>
           </div>
           <div class="score-bar-divider"></div>
           <div class="score-bar-item score-bar-mult">
-            <div class="score-bar-num accent3" id="multDisp">×1.0</div>
+            <div class="score-bar-num accent3" id="multDisp">C0 ×1.0</div>
             <div class="mult-track" style="width:80px;margin-top:4px;"><div class="mult-fill" id="multBar" style="width:0%"></div></div>
           </div>
         </div>
@@ -1036,44 +1205,44 @@ body.combo-screen-flash::before{
       <!-- HAND ZONE — desktop: order 3 (below grid) / mobile: order 1 (above grid) -->
       <div class="hand-zone" id="handZone">
         <div class="hand-zone-header">
-          <span class="hand-zone-label">Hand</span>
+          <span class="hand-zone-label" data-i18n="game.hand">Hand</span>
           <div class="hand-zone-actions">
             <div class="hand-zone-token">
               <span>⬡</span>
               <span class="hand-zone-token-num" id="tokensDispMob">0</span>
-              <span>TOKENS</span>
+              <span data-i18n="game.tokens">TOKENS</span>
             </div>
             <div class="hand-inline-tools">
               <div class="mob-tool" id="undoTool" onclick="undoPlace()">
                 <div class="mob-tool-top">
                   <div class="tool-svg-wrap" id="undoSVG"></div>
-                  <span class="mob-tool-name">UNDO</span>
+                  <span class="mob-tool-name" data-i18n="tool.undo">UNDO</span>
                   <span class="mob-tool-count" id="undoCount">×1</span>
-                  <button class="tool-buy-btn" id="undoBuyBtn" onclick="buyUndoCharge(event)">Buy</button>
+                  <button class="tool-buy-btn" id="undoBuyBtn" onclick="buyUndoCharge(event)" data-i18n="tool.buy">Buy</button>
                 </div>
                 <div class="tool-pips" id="undoPips"></div>
               </div>
               <div class="mob-tool" id="hammerTool" onclick="activateHammer()">
                 <div class="mob-tool-top">
                   <div class="tool-svg-wrap" id="hammerToolSVG"></div>
-                  <span class="mob-tool-name">HAMMER</span>
+                  <span class="mob-tool-name" data-i18n="tool.hammer">HAMMER</span>
                   <span class="mob-tool-count" id="hammerCount">×2</span>
-                  <button class="tool-buy-btn" id="hammerBuyBtn" onclick="buyHammerCharge(event)">Buy</button>
+                  <button class="tool-buy-btn" id="hammerBuyBtn" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
                 </div>
               </div>
             </div>
-            <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ Reroll <span id="rerollCost">2⬡</span></button>
+            <button class="btn-reroll" id="rerollBtn" onclick="doReroll()">↺ <span data-i18n="tool.reroll">Reroll</span> <span id="rerollCost">2⬡</span></button>
           </div>
         </div>
         <div class="hand-row">
           <div class="hold-slot hold-area" id="holdArea">
             <div class="mob-tool-top">
               <div class="tool-svg-wrap" id="holdSVG"></div>
-              <span class="mob-tool-name">HOLD</span>
+              <span class="mob-tool-name" data-i18n="tool.hold">HOLD</span>
               <span class="mob-tool-count" id="holdCount">×1</span>
             </div>
             <div class="hold-preview" id="holdPreview">
-              <span class="hold-empty-hint">EMPTY</span>
+              <span class="hold-empty-hint" data-i18n="game.holdEmpty">EMPTY</span>
             </div>
           </div>
           <div class="hand">
@@ -1088,18 +1257,19 @@ body.combo-screen-flash::before{
       <div class="last-block-warn" id="lastWarn"></div>
       <div class="tutorial-progress" id="tutorialProgress"></div>
       <div class="tutorial-hint" id="tutorialHint"></div>
+      <div class="loop-hint" id="loopHint"></div>
 
     </div>
     <div class="right-panel">
 
   <!-- TOKENS -->
   <div class="pbox">
-    <div class="plabel">Resources</div>
+    <div class="plabel" data-i18n="panel.resources">Resources</div>
     <div class="token-row">
       <span class="token-icon">⬡</span>
       <span class="token-num" id="tokensDisp">0</span>
-      <span class="token-lbl">TOKENS</span>
-      <span class="token-hint">earned by clearing rows, cols &amp; boxes</span>
+        <span class="token-lbl" data-i18n="game.tokens">TOKENS</span>
+      <span class="token-hint" data-i18n="panel.tokensHint">earned by clearing rows, cols &amp; boxes</span>
     </div>
   </div>
 
@@ -1111,12 +1281,12 @@ body.combo-screen-flash::before{
       <div class="tool-header">
         <div class="tool-header-left">
           <div class="tool-svg-wrap" id="holdSVGDesktop"></div>
-          <span class="tool-name">HOLD</span>
+          <span class="tool-name" data-i18n="tool.hold">HOLD</span>
         </div>
         <span class="tool-count" id="holdCountDesktop">×1</span>
       </div>
       <div class="hold-preview" id="holdPreviewDesktop">
-        <span class="hold-empty-hint">EMPTY</span>
+        <span class="hold-empty-hint" data-i18n="game.holdEmpty">EMPTY</span>
       </div>
     </div>
 
@@ -1125,11 +1295,11 @@ body.combo-screen-flash::before{
       <div class="tool-row">
         <div class="tool-header-left">
           <div class="tool-svg-wrap" id="undoSVGDesktop"></div>
-          <span class="tool-name">UNDO</span>
+          <span class="tool-name" data-i18n="tool.undo">UNDO</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="tool-count" id="undoCountDesktop">×1</span>
-          <button class="tool-buy-btn" id="undoBuyBtnDesktop" onclick="buyUndoCharge(event)">Buy</button>
+          <button class="tool-buy-btn" id="undoBuyBtnDesktop" onclick="buyUndoCharge(event)" data-i18n="tool.buy">Buy</button>
         </div>
       </div>
       <div class="tool-pips" id="undoPipsDesktop"></div>
@@ -1140,11 +1310,11 @@ body.combo-screen-flash::before{
       <div class="tool-row">
         <div class="tool-header-left">
           <div class="tool-svg-wrap" id="hammerToolSVGDesktop"></div>
-          <span class="tool-name">HAMMER</span>
+          <span class="tool-name" data-i18n="tool.hammer">HAMMER</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="tool-count" id="hammerCountDesktop">×2</span>
-          <button class="tool-buy-btn" id="hammerBuyBtnDesktop" onclick="buyHammerCharge(event)">Buy</button>
+          <button class="tool-buy-btn" id="hammerBuyBtnDesktop" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
         </div>
       </div>
     </div>
@@ -1164,23 +1334,23 @@ body.combo-screen-flash::before{
 <!-- ══ GAME SETTINGS ══ -->
 <div class="modal-overlay" id="game-settings-overlay">
   <div class="modal-box" style="max-width:320px;">
-    <div class="modal-title" style="font-size:2rem;color:var(--text);margin-bottom:4px;">⚙ Settings</div>
+    <div class="modal-title" style="font-size:2rem;color:var(--text);margin-bottom:4px;">⚙ <span data-i18n="menu.settings">Settings</span></div>
     <div class="modal-sub" id="gsettings-stats" style="margin-bottom:20px;"></div>
 
     <!-- quick volume row -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:16px;">
-      <span style="font-size:0.56rem;color:var(--text);">Sound</span>
+      <span style="font-size:0.56rem;color:var(--text);" data-i18n="audio.sound">Sound</span>
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:0.48rem;color:var(--muted2);" id="gs-vol-label">100%</span>
         <input type="range" id="gs-sfx-vol" min="0" max="100" value="100" style="width:90px;accent-color:var(--accent2);" oninput="onGSVolChange(this)">
-        <button onclick="toggleMute()" id="muteBtn" style="background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.5rem;padding:3px 8px;cursor:pointer;letter-spacing:0.08em;">MUTE</button>
+        <button onclick="toggleMute()" id="muteBtn" style="background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.5rem;padding:3px 8px;cursor:pointer;letter-spacing:0.08em;" data-i18n="tool.mute">MUTE</button>
       </div>
     </div>
 
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="hideGameSettings()">▶ Resume</button>
-      <button class="modal-btn" onclick="confirmRestart()" style="border-color:var(--warn);color:var(--warn);">↺ Restart</button>
-      <button class="modal-btn" onclick="quitToHome()">⌂ Quit to Home</button>
+      <button class="modal-btn primary" onclick="hideGameSettings()">▶ <span data-i18n="common.resume">Resume</span></button>
+      <button class="modal-btn" onclick="confirmRestart()" style="border-color:var(--warn);color:var(--warn);">↺ <span data-i18n="go.restart">Restart</span></button>
+      <button class="modal-btn" onclick="quitToHome()">⌂ <span data-i18n="go.quit">Quit to Home</span></button>
     </div>
   </div>
 </div>
@@ -1189,14 +1359,14 @@ body.combo-screen-flash::before{
 <div class="modal-overlay" id="volume-overlay" onclick="hideVolume()">
   <div class="modal-box" style="max-width:300px;" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div class="modal-title" style="font-size:1.8rem;color:var(--accent2);">🔊 Audio</div>
+      <div class="modal-title" style="font-size:1.8rem;color:var(--accent2);">🔊 <span data-i18n="audio.title">Audio</span></div>
       <button onclick="hideVolume()" style="background:transparent;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
 
     <!-- SFX volume -->
     <div class="vol-row" id="sfx-row">
       <span class="vol-label" id="sfx-label">SFX</span>
-      <span class="vol-desc">Effects, clears, combos</span>
+      <span class="vol-desc" data-i18n="audio.sfx.desc">Effects, clears, combos</span>
       <div class="vol-ctrl">
         <span class="vol-pct" id="sfx-pct">100%</span>
         <input type="range" class="vol-slider" id="sfx-slider" min="0" max="100" value="100"
@@ -1208,7 +1378,7 @@ body.combo-screen-flash::before{
     <!-- BGM volume -->
     <div class="vol-row" id="bgm-row">
       <span class="vol-label" id="bgm-label">BGM</span>
-      <span class="vol-desc">Background music</span>
+      <span class="vol-desc" data-i18n="audio.bgm.desc">Background music</span>
       <div class="vol-ctrl">
         <span class="vol-pct" id="bgm-pct">0%</span>
         <input type="range" class="vol-slider" id="bgm-slider" min="0" max="100" value="10"
@@ -1218,7 +1388,7 @@ body.combo-screen-flash::before{
     </div>
 
     <div style="margin-top:18px;">
-      <button class="modal-btn primary" onclick="hideVolume()">Done</button>
+      <button class="modal-btn primary" onclick="hideVolume()" data-i18n="common.done">Done</button>
     </div>
   </div>
 </div>
@@ -1257,7 +1427,7 @@ body.combo-screen-flash::before{
       <div class="help-row"><span class="help-key">Place block</span><span>+10 pts per cell × multiplier</span></div>
       <div class="help-row"><span class="help-key">Clear row/col</span><span>+80 pts + 1 ⬡</span></div>
       <div class="help-row"><span class="help-key">Clear box</span><span>+120 pts + 2 ⬡</span></div>
-      <div class="help-row"><span class="help-key">Combo</span><span>Clear 3 times in a row → multiplier +0.5</span></div>
+      <div class="help-row"><span class="help-key">Combo</span><span>Clear keeps heat up, no-clear decays by 1</span></div>
     </div>
 
     <div class="help-section">
@@ -1274,7 +1444,7 @@ body.combo-screen-flash::before{
       <div class="help-row"><span class="help-key">P</span><span>Pause / Resume</span></div>
     </div>
 
-    <button class="modal-btn primary" onclick="hideHelp()" style="margin-top:20px;">Got it!</button>
+    <button class="modal-btn primary" onclick="hideHelp()" style="margin-top:20px;" data-i18n="common.gotIt">Got it!</button>
   </div>
 </div>
 
@@ -1282,15 +1452,15 @@ body.combo-screen-flash::before{
 
 <div class="modal-overlay" id="go-overlay">
   <div class="modal-box go">
-    <div class="modal-title" id="go-title">GAME OVER</div>
+    <div class="modal-title" id="go-title" data-i18n="go.title">GAME OVER</div>
     <div class="modal-score" id="go-score">0 pts</div>
     <div class="modal-sub" id="go-sub"></div>
-    <div class="modal-record" id="go-record" style="display:none">★ New Record!</div>
+    <div class="modal-record" id="go-record" style="display:none" data-i18n="go.record">★ New Record!</div>
     <div class="modal-detail" id="go-detail"></div>
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="restartGame()">▶ Play Again</button>
-      <button class="modal-btn" onclick="showLBFromGame()">🏆 Leaderboard</button>
-      <button class="modal-btn" onclick="goScreen('screen-menu')">✕ Main Menu</button>
+      <button class="modal-btn primary" onclick="restartGame()">▶ <span data-i18n="go.playAgain">Play Again</span></button>
+      <button class="modal-btn" onclick="showLBFromGame()">🏆 <span data-i18n="menu.leaderboard">Leaderboard</span></button>
+      <button class="modal-btn" onclick="goScreen('screen-menu')">✕ <span data-i18n="menu.mainMenu">Main Menu</span></button>
     </div>
   </div>
 </div>
@@ -1321,7 +1491,7 @@ function showHelp(){document.getElementById('help-overlay').classList.add('show'
 function hideHelp(){document.getElementById('help-overlay').classList.remove('show');}
 
 function resetTutorialState(){
-  tutorial={active:false,phase:-1,step:0,target:null,targets:[],highlightRows:[],highlightBox:null,highlightRect:null,lockedTool:null,needsUndo:false,pendingEnd:false,fx:{dim:true,pointer:null,lock:true,focusRect:null,extraFocus:null,emoji:'👆'}};
+  tutorial={active:false,phase:-1,step:0,target:null,targets:[],requiredVals:[],highlightRows:[],highlightBox:null,highlightRect:null,lockedTool:null,needsUndo:false,pendingEnd:false,fx:{dim:true,pointer:null,lock:true,focusRect:null,extraFocus:null,emoji:'👆'}};
   const hint=$id('tutorialHint');
   if(hint){hint.textContent='';hint.classList.remove('show');}
   const progress=$id('tutorialProgress');
@@ -1329,6 +1499,16 @@ function resetTutorialState(){
   hideTutorialFX();
   const gameScreen=$id('screen-game');
   if(gameScreen) gameScreen.classList.remove('tutorial-mode');
+}
+function showLoopHint(text,duration=2000){
+  const el=$id('loopHint');
+  if(!el) return;
+  el.textContent=text;
+  el.classList.add('show');
+  clearTimeout(showLoopHint._timer);
+  showLoopHint._timer=setTimeout(()=>{
+    el.classList.remove('show');
+  },duration);
 }
 function getTutorialProgressText(){
   const phaseMap={
@@ -1342,8 +1522,8 @@ function getTutorialProgressText(){
   };
   const stepNum=phaseMap[tutorial.phase];
   if(!stepNum) return '';
-  if(tutorial.phase===999) return `Tutorial Phase End · Step 7/7`;
-  return `Tutorial Phase ${tutorial.phase} · Step ${stepNum}/7`;
+  if(tutorial.phase===999) return t('tut.progress.end');
+  return t('tut.progress',{phase:tutorial.phase,step:stepNum});
 }
 function updateTutorialProgress(){
   const progress=$id('tutorialProgress');
@@ -1600,6 +1780,7 @@ function clearTutorialFocus(){
 function resetTutorialPhaseState(){
   tutorial.target=null;
   tutorial.targets=[];
+  tutorial.requiredVals=[];
   tutorial.highlightRows=[];
   tutorial.highlightBox=null;
   tutorial.highlightRect=null;
@@ -1612,7 +1793,7 @@ function isTutorialLocked(){
 function setupTutorialState(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
-  score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
+  score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;comboDecayedLastTurn=false;emptyTurns=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
@@ -1702,6 +1883,7 @@ function phase3Setup(){
     genTutorialBlock([[0,0,9]])
   ];
   tutorial.targets=[{r:1,c:4},{r:6,c:7}];
+  tutorial.requiredVals=[5,9];
   tutorial.target=tutorial.targets[0];
   updateTutorialProgress();
   renderAll();
@@ -1762,7 +1944,7 @@ function startTutorial(){
 
 // ── Game Settings overlay (was Pause) ──
 function showGameSettings(){
-  document.getElementById('gsettings-stats').textContent=`Score: ${score.toLocaleString()}  ·  Moves: ${moves}  ·  Errors: ${errors}`;
+  document.getElementById('gsettings-stats').textContent=t('go.sub',{moves,errors,combo});
   // Sync quick volume slider
   document.getElementById('gs-sfx-vol').value=Math.round(volState.sfx*100);
   document.getElementById('gs-vol-label').textContent=Math.round(volState.sfx*100)+'%';
@@ -1771,7 +1953,7 @@ function showGameSettings(){
 function hideGameSettings(){document.getElementById('game-settings-overlay').classList.remove('show');}
 function confirmRestart(){
   hideGameSettings();
-  if(confirm('Restart this game? Your current progress will be lost.')) newGame();
+  if(confirm(t('confirm.restart'))) newGame();
 }
 function quitToHome(){hideGameSettings();bgmStop();goScreen('screen-menu');}
 // Sync quick vol slider in game-settings to main vol
@@ -1790,7 +1972,7 @@ function toggleMute(){
   else{volState.sfx=volState._sfxBefore||0.8;}
   document.getElementById('gs-sfx-vol').value=Math.round(volState.sfx*100);
   document.getElementById('gs-vol-label').textContent=Math.round(volState.sfx*100)+'%';
-  document.getElementById('muteBtn').textContent=volState.sfxMuted?'UNMUTE':'MUTE';
+  document.getElementById('muteBtn').textContent=volState.sfxMuted?t('tool.unmute'):t('tool.mute');
   unlockAudio();
   syncVolUI();saveVol();
   if(!volState.sfxMuted&&volState.sfx>0) previewSFX(true);
@@ -1837,7 +2019,7 @@ function onVolChange(type, val){
   unlockAudio();
   syncVolUI();saveVol();
   if(type==='sfx'&&v>0) previewSFX();
-  if(type==='bgm'&&isGameActive()&&currentTheme==='ZOO'){
+  if(type==='bgm'&&isGameActive()){
     if(v>0&&!volState.bgmMuted) bgmResume();
     else bgmApplyVol();
   }
@@ -1851,7 +2033,7 @@ function toggleVolMute(type){
   unlockAudio();
   syncVolUI();saveVol();
   if(type==='sfx'&&!muted&&volState.sfx>0) previewSFX(true);
-  if(type==='bgm'&&isGameActive()&&currentTheme==='ZOO'){
+  if(type==='bgm'&&isGameActive()){
     if(!muted&&volState.bgm>0) bgmResume();
     else bgmApplyVol();
   }
@@ -1865,14 +2047,16 @@ function syncVolUI(){
   if(sp) sp.textContent=Math.round(volState.sfx*100)+'%';
   if(bp) bp.textContent=Math.round(volState.bgm*100)+'%';
   const sl=$id('sfx-label'), bl=$id('bgm-label');
-  if(sl) sl.textContent=`SFX ${Math.round(volState.sfx*100)}%`;
-  if(bl) bl.textContent=`BGM ${Math.round(volState.bgm*100)}%`;
+  if(sl) sl.textContent=`${t('audio.sfx')} ${Math.round(volState.sfx*100)}%`;
+  if(bl) bl.textContent=`${t('audio.bgm')} ${Math.round(volState.bgm*100)}%`;
   const sm=document.getElementById('sfx-mute'),bm=document.getElementById('bgm-mute');
   if(sm) sm.textContent=volState.sfxMuted||volState.sfx===0?'🔇':'🔊';
   if(bm) bm.textContent=volState.bgmMuted||volState.bgm===0?'🔇':'🔊';
   // Volume button in topbar reflects mute state
   const vb=document.getElementById('volumeBtn');
-  if(vb) vb.textContent=(volState.sfxMuted||volState.sfx===0)?'🔇 Vol':'🔊 Vol';
+  if(vb) vb.innerHTML=(volState.sfxMuted||volState.sfx===0)?`🔇 <span>${t('top.vol')}</span>`:`🔊 <span>${t('top.vol')}</span>`;
+  const muteBtn=$id('muteBtn');
+  if(muteBtn) muteBtn.textContent=volState.sfxMuted?t('tool.unmute'):t('tool.mute');
   // Update settings sfx toggle too
   settings.sfx=(volState.sfx>0&&!volState.sfxMuted);
   // Apply BGM volume live
@@ -1902,18 +2086,54 @@ const SFX_BOOST = 5.0;
 // ══════════════════════════════════════════════════════
 // BGM — single looping buffer for mobile stability
 // ══════════════════════════════════════════════════════
-const bgmA = new Audio('zoo_bgm.mp3');
+const BGM_SRC_BY_THEME = {
+  ZOO:'zoo_bgm.mp3',
+  NUM:'num_bgm.mp3'
+};
+const bgmA = new Audio(BGM_SRC_BY_THEME.ZOO);
 bgmA.loop = true;
 bgmA.preload = 'auto';
 bgmA.playsInline = true;
 bgmA.setAttribute('playsinline','');
 bgmA.setAttribute('webkit-playsinline','');
+bgmA.setAttribute('data-src', BGM_SRC_BY_THEME.ZOO);
 
 let currentBGM = bgmA;
 let bgmFadeTimer = null;
 let audioUnlocked = false;
 let bgmSourceNode = null;
 let bgmGainNode = null;
+let bgmNumFallbackToZoo = false;
+
+function getBgmSourceForTheme(theme){
+  if(theme==='NUM'&&bgmNumFallbackToZoo) return BGM_SRC_BY_THEME.ZOO;
+  return BGM_SRC_BY_THEME[theme]||BGM_SRC_BY_THEME.ZOO;
+}
+
+function ensureThemeBgm(theme, autoPlay=false){
+  if(!currentBGM) return;
+  const nextSrc=getBgmSourceForTheme(theme);
+  const curSrc=currentBGM.getAttribute('data-src')||'';
+  if(curSrc===nextSrc){
+    if(autoPlay&&!currentBGM.paused) return;
+    if(autoPlay) currentBGM.play().catch(()=>{});
+    return;
+  }
+  currentBGM.pause();
+  currentBGM.src=nextSrc;
+  currentBGM.setAttribute('data-src',nextSrc);
+  currentBGM.load();
+  if(autoPlay) currentBGM.play().catch(()=>{});
+}
+
+currentBGM.addEventListener('error',()=>{
+  const curSrc=currentBGM.getAttribute('data-src')||'';
+  if(curSrc===BGM_SRC_BY_THEME.NUM&&!bgmNumFallbackToZoo){
+    bgmNumFallbackToZoo=true;
+    ensureThemeBgm('NUM', isGameActive()&&!volState.bgmMuted&&volState.bgm>0);
+    bgmApplyVol();
+  }
+});
 
 function ensureBgmAudioGraph(){
   if(!AC||bgmSourceNode||!currentBGM) return;
@@ -1994,14 +2214,14 @@ function bgmApplyVol(){
   const target = Math.max(0, Math.min(1, volState.bgmMuted ? 0 : volState.bgm));
   if(!currentBGM) return;
   currentBGM.muted = false;
-  if(currentBGM.paused && target > 0 && currentTheme === 'ZOO'){
+  if(currentBGM.paused && target > 0){
     currentBGM.play().catch(()=>{});
   }
   setBgmVolume(target, target === 0);
 }
 
 function bgmPlay(){
-  if(currentTheme !== 'ZOO') return;
+  ensureThemeBgm(currentTheme, false);
   const target = volState.bgmMuted ? 0 : volState.bgm;
   unlockAudio();
   stopBgmFade();
@@ -2024,7 +2244,7 @@ function bgmPause(){
 }
 
 function bgmResume(){
-  if(currentTheme !== 'ZOO') return;
+  ensureThemeBgm(currentTheme, false);
   const target = volState.bgmMuted ? 0 : volState.bgm;
   if(target <= 0) return;
   unlockAudio();
@@ -2066,15 +2286,248 @@ function sfxCombo(n){const b=440+n*40;tone([b],0.06,'square',0.14);tone([b*2],0.
 function sfxHold(){tone([320],0.06,'triangle',0.12);tone([480],0.06,'triangle',0.09,0.05);}
 function sfxHammer(){tone([80],0.14,'sawtooth',0.24);tone([160],0.08,'triangle',0.14,0.04);}
 function sfxGameOver(){[440,349,294,220].forEach((f,i)=>tone([f],0.28,'sine',0.18,i*0.18));}
-let settings={sfx:true,conflicts:true,pops:true,difficulty:'easy'};
-function loadSettings(){try{const s=JSON.parse(localStorage.getItem('sxb_s')||'{}');settings={...settings,...s};}catch(e){}applySettingsUI();}
+let settings={sfx:true,conflicts:true,pops:true,difficulty:'easy',lang:'en'};
+const LANG={
+  zh:{
+    'menu.play':'开始游戏',
+    'menu.tutorial':'新手教程',
+    'menu.leaderboard':'排行榜',
+    'menu.settings':'设置',
+    'menu.mainMenu':'主菜单',
+    'menu.difficulty':'难度',
+    'score.score':'分数',
+    'score.moves':'步数',
+    'score.combo':'连击',
+    'score.penalty':'惩罚',
+    'game.hand':'手牌',
+    'game.board':'棋盘',
+    'game.tokens':'代币',
+    'game.lastBlock':'⚠ 最后一块！',
+    'game.holdEmpty':'空',
+    'game.filled':'{filled}/81 已填',
+    'go.title':'GAME OVER',
+    'go.sub':'步数: {moves} · 错误: {errors} · Combo: {combo}',
+    'go.detail':'{filled}/81 已填 · {diff}',
+    'go.record':'★ 新纪录！',
+    'go.playAgain':'再来一局',
+    'go.restart':'重新开始',
+    'go.quit':'返回主菜单',
+    'go.score':'{score} 分',
+    'tool.mute':'静音',
+    'tool.unmute':'解除静音',
+    'tool.buy':'购买',
+    'tool.reroll':'重抽',
+    'tool.hold':'暂存',
+    'tool.undo':'撤回',
+    'tool.hammer':'锤子',
+    'top.help':'帮助',
+    'top.vol':'音量',
+    'common.done':'完成',
+    'common.back':'返回',
+    'common.resume':'继续',
+    'common.gotIt':'知道了',
+    'settings.language':'语言',
+    'settings.difficulty':'难度',
+    'settings.audioDisplay':'音频与显示',
+    'settings.displayTheme':'显示主题',
+    'settings.displayTheme.desc':'切换数字 / 动物图标',
+    'settings.displayTheme.title':'切换显示主题',
+    'settings.sfx':'音效',
+    'settings.sfx.desc':'放置、消除、连击',
+    'settings.conflicts':'冲突高亮',
+    'settings.conflicts.desc':'重复数字标红提示',
+    'settings.popups':'分数弹字',
+    'settings.popups.desc':'放置后显示浮动分数',
+    'settings.saveClose':'保存并关闭',
+    'settings.diff.easy.desc':'更多小方块',
+    'settings.diff.medium.desc':'平衡',
+    'settings.diff.hard.desc':'更多大方块',
+    'settings.diff.hell.desc':'祝你好运',
+    'tut.progress':'教程阶段 {phase} · 步骤 {step}/7',
+    'tut.progress.end':'教程完成 · 步骤 7/7',
+    'tut.locked.hold':'教程中暂时不能使用 HOLD',
+    'tut.locked.hammer':'教程后面会教你锤子',
+    'tut.locked.undo':'教程后面会教你撤回',
+    'tut.locked.hammerCell':'用锤子清除高亮格子',
+    'loop.keepClearing':'不断消除，别让棋盘卡死。',
+    'menu.diff.easy':'简单',
+    'menu.diff.medium':'普通',
+    'menu.diff.hard':'困难',
+    'menu.diff.hell':'地狱',
+    'panel.resources':'资源',
+    'panel.tokensHint':'通过清除行、列和九宫格获得',
+    'audio.sound':'声音',
+    'audio.title':'音频',
+    'audio.sfx':'音效',
+    'audio.bgm':'背景音乐',
+    'audio.sfx.desc':'效果音、消除、连击',
+    'audio.bgm.desc':'背景音乐',
+    'lb.tab.all':'全部',
+    'lb.clear':'清空所有记录',
+    'lb.empty':'暂无记录',
+    'lb.empty.sub':'先玩一局吧！',
+    'lb.meta':'{moves} 步 · 连击 {combo}',
+    'confirm.restart':'要重新开始吗？当前进度会丢失。',
+    'confirm.clearRecords':'确定清空所有记录吗？',
+  },
+  en:{
+    'menu.play':'Play',
+    'menu.tutorial':'Tutorial',
+    'menu.leaderboard':'Leaderboard',
+    'menu.settings':'Settings',
+    'menu.mainMenu':'Main Menu',
+    'menu.difficulty':'Difficulty',
+    'score.score':'Score',
+    'score.moves':'Moves',
+    'score.combo':'Combo',
+    'score.penalty':'Penalty',
+    'game.hand':'Hand',
+    'game.board':'Board',
+    'game.tokens':'TOKENS',
+    'game.lastBlock':'⚠ LAST BLOCK!',
+    'game.holdEmpty':'EMPTY',
+    'game.filled':'{filled}/81 filled',
+    'go.title':'GAME OVER',
+    'go.sub':'Moves: {moves} · Errors: {errors} · Combo: {combo}',
+    'go.detail':'{filled}/81 filled · {diff}',
+    'go.record':'★ New Record!',
+    'go.playAgain':'Play Again',
+    'go.restart':'Restart',
+    'go.quit':'Quit to Home',
+    'go.score':'{score} pts',
+    'tool.mute':'MUTE',
+    'tool.unmute':'UNMUTE',
+    'tool.buy':'Buy',
+    'tool.reroll':'Reroll',
+    'tool.hold':'HOLD',
+    'tool.undo':'UNDO',
+    'tool.hammer':'HAMMER',
+    'top.help':'Help',
+    'top.vol':'Vol',
+    'common.done':'Done',
+    'common.back':'Back',
+    'common.resume':'Resume',
+    'common.gotIt':'Got it!',
+    'settings.language':'Language',
+    'settings.difficulty':'Difficulty',
+    'settings.audioDisplay':'Audio & Display',
+    'settings.displayTheme':'Display Theme',
+    'settings.displayTheme.desc':'Switch between numbers and zoo icons',
+    'settings.displayTheme.title':'Switch display theme',
+    'settings.sfx':'Sound Effects',
+    'settings.sfx.desc':'Placement, clears, combos',
+    'settings.conflicts':'Show Conflicts',
+    'settings.conflicts.desc':'Highlight duplicates in red',
+    'settings.popups':'Score Popups',
+    'settings.popups.desc':'Floating +pts on placement',
+    'settings.saveClose':'Save & Close',
+    'settings.diff.easy.desc':'More small blocks',
+    'settings.diff.medium.desc':'Balanced',
+    'settings.diff.hard.desc':'Bigger blocks',
+    'settings.diff.hell.desc':'Good luck',
+    'tut.progress':'Tutorial Phase {phase} · Step {step}/7',
+    'tut.progress.end':'Tutorial End · Step 7/7',
+    'tut.locked.hold':'HOLD is locked in tutorial',
+    'tut.locked.hammer':'Hammer will unlock later in tutorial',
+    'tut.locked.undo':'Undo will unlock later in tutorial',
+    'tut.locked.hammerCell':'Use hammer on the highlighted cell',
+    'loop.keepClearing':'Keep clearing. Don’t get stuck.',
+    'menu.diff.easy':'Easy',
+    'menu.diff.medium':'Medium',
+    'menu.diff.hard':'Hard',
+    'menu.diff.hell':'Hell',
+    'panel.resources':'Resources',
+    'panel.tokensHint':'earned by clearing rows, cols & boxes',
+    'audio.sound':'Sound',
+    'audio.title':'Audio',
+    'audio.sfx':'SFX',
+    'audio.bgm':'BGM',
+    'audio.sfx.desc':'Effects, clears, combos',
+    'audio.bgm.desc':'Background music',
+    'lb.tab.all':'All',
+    'lb.clear':'Clear All Records',
+    'lb.empty':'No records yet.',
+    'lb.empty.sub':'Play a game first!',
+    'lb.meta':'{moves} moves · {combo} combo',
+    'confirm.restart':'Restart this game? Your current progress will be lost.',
+    'confirm.clearRecords':'Clear all records?',
+  }
+};
+let currentLang='en';
+function t(key,vars={}){
+  const dict=LANG[currentLang]||LANG.en;
+  let str=dict[key]??LANG.en[key]??key;
+  return str.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??`{${k}}`);
+}
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent=t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+    el.title=t(el.dataset.i18nTitle);
+  });
+  const zh=$id('langZhBtn'), en=$id('langEnBtn');
+  if(zh) zh.classList.toggle('active',currentLang==='zh');
+  if(en) en.classList.toggle('active',currentLang==='en');
+  const muteBtn=$id('muteBtn');
+  if(muteBtn) muteBtn.textContent=volState.sfxMuted?t('tool.unmute'):t('tool.mute');
+  const menuDiff=$id('menuPlayDiff');
+  if(menuDiff) menuDiff.textContent=t(`menu.diff.${settings.difficulty}`) || settings.difficulty.toUpperCase();
+  const activeLBTab=document.querySelector('.lb-tab.active');
+  if(activeLBTab) renderLB(activeLBTab.dataset.diff||'all');
+  updateTutorialProgress();
+  renderAll();
+}
+function setLang(lang){
+  currentLang=(lang==='zh'||lang==='en')?lang:'en';
+  settings.lang=currentLang;
+  try{localStorage.setItem('sxb_lang',currentLang);}catch(e){}
+  applyLang();
+}
+function loadLang(){
+  let saved='en';
+  try{
+    const v=localStorage.getItem('sxb_lang');
+    if(v==='zh'||v==='en') saved=v;
+    else if((navigator.language||'').toLowerCase().startsWith('zh')) saved='zh';
+  }catch(e){}
+  currentLang=saved;
+}
+const UI_THEME_KEY='sxb_ui_theme';
+function setVisualTheme(mode){
+  const next=(mode==='dark')?'dark':'light';
+  document.body.dataset.theme=next;
+  const btn=$id('themeModeBtn');
+  if(btn) btn.textContent=next==='dark'?'☀ Light':'🌙 Dark';
+  try{localStorage.setItem(UI_THEME_KEY,next);}catch(e){}
+}
+function toggleVisualTheme(){
+  const cur=document.body.dataset.theme==='dark'?'dark':'light';
+  setVisualTheme(cur==='dark'?'light':'dark');
+}
+function loadVisualTheme(){
+  let saved='light';
+  try{
+    const v=localStorage.getItem(UI_THEME_KEY);
+    if(v==='dark'||v==='light') saved=v;
+  }catch(e){}
+  setVisualTheme(saved);
+}
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem('sxb_s')||'{}');
+    settings={...settings,...s};
+    if(s&&typeof s.lang==='string'&&(s.lang==='zh'||s.lang==='en')) currentLang=s.lang;
+  }catch(e){}
+  applySettingsUI();
+}
 function applySettingsUI(){
   document.getElementById('set-sfx').checked=settings.sfx;
   document.getElementById('set-conflicts').checked=settings.conflicts;
   document.getElementById('set-pops').checked=settings.pops;
   document.querySelectorAll('.diff-opt').forEach(b=>b.classList.toggle('sel',b.dataset.diff===settings.difficulty));
   const menuDiff=$id('menuPlayDiff');
-  if(menuDiff) menuDiff.textContent=settings.difficulty.toUpperCase();
+  if(menuDiff) menuDiff.textContent=t(`menu.diff.${settings.difficulty}`)||settings.difficulty.toUpperCase();
 }
 function selDiff(btn){document.querySelectorAll('.diff-opt').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
 function saveSettings(){
@@ -2083,6 +2536,7 @@ function saveSettings(){
   settings.pops=document.getElementById('set-pops').checked;
   const sel=document.querySelector('.diff-opt.sel');
   if(sel)settings.difficulty=sel.dataset.diff;
+  settings.lang=currentLang;
   try{localStorage.setItem('sxb_s',JSON.stringify(settings));}catch(e){}
   goScreen('screen-menu');
 }
@@ -2101,17 +2555,17 @@ function lbTab(btn){document.querySelectorAll('.lb-tab').forEach(b=>b.classList.
 function renderLB(filter){
   const lb=getLB();const list=filter==='all'?lb:lb.filter(e=>e.diff===filter);const top5=list.slice(0,5);
   const el=document.getElementById('lbList');el.innerHTML='';
-  if(!top5.length){el.innerHTML='<div class="lb-empty">No records yet.<br>Play a game first!</div>';return;}
+  if(!top5.length){el.innerHTML=`<div class="lb-empty">${t('lb.empty')}<br>${t('lb.empty.sub')}</div>`;return;}
   const medals=['🥇','🥈','🥉','4','5'];
   top5.forEach((e,i)=>{
     const row=document.createElement('div');row.className=`lb-row${i===0?' r1':i===1?' r2':i===2?' r3':''}`;
     const mv=e.moves??0;
     const cb=e.combo??0;
-    row.innerHTML=`<div class="lb-rank">${medals[i]}</div><div><div class="lb-name">${e.date}</div><div class="lb-meta">${mv} moves · ${cb} combo</div></div><div class="lb-diff">${e.diff}</div><div class="lb-score">${e.score.toLocaleString()}</div>`;
+    row.innerHTML=`<div class="lb-rank">${medals[i]}</div><div><div class="lb-name">${e.date}</div><div class="lb-meta">${t('lb.meta',{moves:mv,combo:cb})}</div></div><div class="lb-diff">${t(`menu.diff.${e.diff}`)||String(e.diff).toUpperCase()}</div><div class="lb-score">${e.score.toLocaleString()}</div>`;
     el.appendChild(row);
   });
 }
-function clearLB(){if(!confirm('Clear all records?'))return;try{localStorage.removeItem('sxb_lb');}catch(e){}renderLB('all');}
+function clearLB(){if(!confirm(t('confirm.clearRecords')))return;try{localStorage.removeItem('sxb_lb');}catch(e){}renderLB('all');}
 
 // ══════════════════════════════════════════════════════
 // THEME SYSTEM
@@ -2140,9 +2594,13 @@ function setTheme(theme){
   if(themeNum) themeNum.classList.toggle('active',theme==='NUM');
   if(themeZoo) themeZoo.classList.toggle('active',theme==='ZOO');
   document.body.classList.toggle('zoo-mode',theme==='ZOO');
-  // BGM: play in ZOO, pause in NUM
-  if(theme==='ZOO') bgmPlay();
-  else bgmPause();
+  // BGM: switch track with theme and keep playback state
+  if(isGameActive()){
+    ensureThemeBgm(theme, !volState.bgmMuted&&volState.bgm>0);
+    bgmApplyVol();
+  } else {
+    ensureThemeBgm(theme, false);
+  }
   // Refresh block colors to match new theme
   [...hand.filter(Boolean),...(holdBlock?[holdBlock]:[]),..._placedBlocks].forEach(b=>{
     if(b&&b.tier) b.color=getBlockColor(b.tier);
@@ -2196,13 +2654,28 @@ function getFilledRatio(){
 function clamp(v,min,max){
   return Math.max(min,Math.min(max,v));
 }
+function getErrorPenalty(){
+  return parseFloat(clamp(Math.max(0,errors)*0.06,0,1.5).toFixed(2));
+}
+function computeMultiplier(){
+  const comboGain=Math.floor(combo/2)*0.5;
+  const m=1+comboGain-getErrorPenalty();
+  return parseFloat(clamp(m,1,3).toFixed(1));
+}
+function updateCombo(curCombo,didClear){
+  if(didClear) return curCombo+1;
+  return Math.max(0,curCombo-1);
+}
+function tokensEarned(base,mult){
+  return Math.min(5,Math.max(1,Math.round(base*mult)));
+}
 function performanceEffect(perf){
   return 40/(1+Math.exp(-(perf-50)/10));
 }
 function getPerformanceScore(){
   const last5MovesClearRate=getLast5MovesClearRate();
   const multiClear=runMetrics.lastMultiClear||0;
-  const mistakes=errors;
+  const mistakes=Math.round(getErrorPenalty()*10);
   const perfRaw=
     combo*6+
     last5MovesClearRate*12+
@@ -2212,8 +2685,8 @@ function getPerformanceScore(){
 }
 function calcPressure(){
   const fill=getFilledRatio();
-  const noMovePenalty=(streak===0?10:0);
-  const basePressure=clamp(fill*70 + noMovePenalty + (errors*2),0,100);
+  const noMovePenalty=(combo===0?10:0);
+  const basePressure=clamp(fill*70 + noMovePenalty + (getErrorPenalty()*12),0,100);
   const performanceInfluence=performanceEffect(getPerformanceScore());
   const tensionBoost=Math.sin(moves*0.4)*8;
   return clamp(basePressure-performanceInfluence+tensionBoost,0,100);
@@ -2279,6 +2752,8 @@ function hidePause(){hideGameSettings();}
 // ══════════════════════════════════════════════════════
 let grid=[],hand=[],holdBlock=null;
 let score=0,moves=0,errors=0,combo=0,multiplier=1,streak=0;
+let comboDecayedLastTurn=false;
+let emptyTurns=0;
 let tokens=0,hammers=2,activeIdx=null;
 let undoStack=[],undoCharges=1;
 let toolBought={undoBought:0,hammerBought:0,rerollBought:0};
@@ -2291,8 +2766,10 @@ const MAX_UNDO_STACK=12;
 const UNDO_STOCK_CAP=5;
 const HAMMER_STOCK_CAP=5;
 const DRAG_THRESHOLD=5;
-let hammerMode=false,_placedBlocks=[];
+let hammerMode=false,hammerBusy=false,_placedBlocks=[];
 const ANALYTICS_ENDPOINT='';
+const LOOP_INTRO_KEY='sxb_loop_intro_v1';
+let onboardingAssistMovesLeft=0;
 let runMetrics={
   startedAt:0,
   moveClearHistory:[],
@@ -2305,6 +2782,7 @@ let tutorial={
   step:0,
   target:null,
   targets:[],
+  requiredVals:[],
   highlightRows:[],
   highlightBox:null,
   highlightRect:null,
@@ -2417,6 +2895,7 @@ function getGameState(){
     errors,
     multiplier,
     streak,
+    emptyTurns,
     tokens,
     hammers,
     undoCharges,
@@ -2450,6 +2929,7 @@ function clearSavedGame(){
 function restoreGame(save){
   if(!save||!Array.isArray(save.board)) return newGame();
   resetTutorialState();
+  onboardingAssistMovesLeft=0;
   document.getElementById('go-overlay').classList.remove('show');
   document.getElementById('pause-overlay').classList.remove('show');
 
@@ -2465,6 +2945,8 @@ function restoreGame(save){
   errors=Number(save.errors)||0;
   multiplier=Number(save.multiplier)||1;
   streak=Number(save.streak)||0;
+  emptyTurns=Number(save.emptyTurns)||0;
+  comboDecayedLastTurn=false;
   tokens=Number(save.tokens)||0;
   hammers=Number(save.hammers)||2;
   undoCharges=Number.isFinite(Number(save.undoCharges))?Math.max(0,Number(save.undoCharges)):UNDO_GIFT;
@@ -2484,7 +2966,9 @@ function restoreGame(save){
 
   if(save.settings&&typeof save.settings==='object'){
     settings={...settings,...save.settings};
+    if(save.settings.lang==='zh'||save.settings.lang==='en') currentLang=save.settings.lang;
     applySettingsUI();
+    applyLang();
   }
   if(save.meta&&typeof save.meta==='object'){
     setMetaState({tutorialDone:!!save.meta.tutorialDone});
@@ -2611,8 +3095,11 @@ function weighted(weights){
 }
 function getRerollType(){
   const nearDeath=isNearDeath();
+  if(emptyTurns>=2){
+    return ['normal','perfect','godlike'][weighted([40,40,20])];
+  }
   if(nearDeath){
-    return ['normal','perfect','godlike'][weighted([30,50,20])];
+    return ['normal','perfect','godlike'][weighted([35,45,20])];
   }
   if(combo>=2){
     return ['normal','perfect','godlike'][weighted([75,20,5])];
@@ -2763,6 +3250,15 @@ function fillHand(){
   // Grid completely full — skip generation, let checkGameOver handle it
   if(grid.flat().filter(v=>v).length===81) return 0;
   while(hand.length<3){const b=genBlock();if(b)hand.push(b);else break;}
+  if(onboardingAssistMovesLeft>0){
+    const targets=findAlmostCompleteTargets();
+    if(targets.length){
+      const target=targets[Math.floor(Math.random()*targets.length)];
+      const finisher=makeSingleCellBlock(target.val,'FINISH');
+      if(hand.length===0) hand.push(finisher);
+      else hand[0]=finisher;
+    }
+  }
   if(!hand.some(b=>b&&!b.used&&hasPlacement(b)) || isNearDeath()){
     const f=giveEmergencyBlock();
     if(f){
@@ -2789,10 +3285,17 @@ function newGame(){
   document.getElementById('pause-overlay').classList.remove('show');
   grid=Array.from({length:9},()=>Array(9).fill(0));
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
-  score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;tokens=0;hammers=2;hammerMode=false;
+  score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;comboDecayedLastTurn=false;emptyTurns=0;tokens=0;hammers=2;hammerMode=false;
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  let isFirstLoop=false;
+  try{isFirstLoop=!localStorage.getItem(LOOP_INTRO_KEY);}catch(e){isFirstLoop=false;}
+  onboardingAssistMovesLeft=isFirstLoop?3:0;
+  if(isFirstLoop){
+    try{localStorage.setItem(LOOP_INTRO_KEY,'1');}catch(e){}
+    showLoopHint(t('loop.keepClearing'),2000);
+  }
   clearSnap();_csz=0;fillHand();initRunMetrics();renderAll();
 }
 
@@ -2921,7 +3424,7 @@ function renderTray(){
     slot.appendChild(mini);slot.appendChild(meta);slot.appendChild(badge);tray.appendChild(slot);
   });
   const rem=hand.filter(b=>b&&!b.used).length;
-  $id('lastWarn').textContent=(rem===1&&!holdBlock)?'⚠ LAST BLOCK!':'';
+  $id('lastWarn').textContent=(rem===1&&!holdBlock)?t('game.lastBlock'):'';
   const rrCost=getToolCost('reroll');
   const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<rrCost;
   // Highlight both hold areas when a block is selected
@@ -3035,7 +3538,7 @@ function setHoldPreview(previewEl, cellSz){
   if(!previewEl) return;
   previewEl.innerHTML='';
   if(!holdBlock){
-    const e=document.createElement('span');e.className='hold-empty-hint';e.textContent='EMPTY';
+    const e=document.createElement('span');e.className='hold-empty-hint';e.textContent=t('game.holdEmpty');
     previewEl.appendChild(e);
     return;
   }
@@ -3162,19 +3665,31 @@ function applyBlockToGrid(block,sr,sc){
   return pos;
 }
 
+function updateComboDecay(didClear){
+  const prev=combo;
+  combo=updateCombo(combo,didClear);
+  if(didClear){
+    comboDecayedLastTurn=false;
+    return;
+  }
+  comboDecayedLastTurn=combo<prev;
+}
+
 function applyPlacementRewards(block,pos){
   moves++;
+  if(onboardingAssistMovesLeft>0) onboardingAssistMovesLeft--;
   sfxPlace(block.cells.length);
-  streak++;
-  let multGain=0.1;
-  if(streak>=5) multGain+=block.cells.length*0.02;
-  multiplier=Math.min(3.0,parseFloat((multiplier+multGain).toFixed(2)));
-  const pts=Math.round(block.cells.length*10*multiplier);
   const clearInfo=checkClear(pos);
+  const didClear=clearInfo.clears>0;
+  updateComboDecay(didClear);
+  emptyTurns=didClear?0:(emptyTurns+1);
+  streak=combo;
+  multiplier=computeMultiplier();
+  clearInfo.comboLevel=combo;
+  clearInfo.tokenGain=clearInfo.tokenBase>0?tokensEarned(clearInfo.tokenBase,multiplier):0;
+  if(clearInfo.tokenGain>0) tokens+=clearInfo.tokenGain;
+  const pts=Math.round(block.cells.length*10*multiplier);
   score+=pts+clearInfo.bonus;
-  if(clearInfo.clears>0&&clearInfo.comboLevel>0&&clearInfo.comboLevel%3===0){
-    multiplier=Math.min(3.0,parseFloat((multiplier+0.5).toFixed(2)));
-  }
   trackMoveClear(clearInfo);
   return {pts,clearInfo};
 }
@@ -3191,16 +3706,14 @@ function finishPlacementFeedback(pos,clearInfo,scoreAnchor){
   const clearDelay=runClearFeedback(clearInfo);
   setTimeout(()=>checkGameOver(), clearDelay ? clearDelay+80 : 0);
   if(settings.pops&&scoreAnchor) scorePop(`+${scoreAnchor.points}`,[scoreAnchor.r,scoreAnchor.c]);
+  return clearDelay||0;
 }
 
 function handleInvalidPlacement(block,sr,sc){
   flashInvalidPlacement();
   sfxError();
   errors++;
-  combo=0;
-  streak=0;
-  const pen=block.cells.length*0.02;
-  multiplier=Math.max(1.0, parseFloat((multiplier-pen).toFixed(2)));
+  multiplier=computeMultiplier();
   if(settings.pops) scorePop(`-mult`,[sr,sc],true);
   updateStats();
 }
@@ -3214,8 +3727,7 @@ function placeHoldBlock(r,c){
     return;
   }
   if(!canPlace(holdBlock,r,c)){
-    flashInvalidPlacement();
-    sfxError();
+    handleInvalidPlacement(holdBlock,r,c);
     return;
   }
   const block=holdBlock;
@@ -3224,8 +3736,8 @@ function placeHoldBlock(r,c){
   const {pts,clearInfo}=applyPlacementRewards(block,pos);
   pushUndoSnapshot('HOLD',block,snapshot,pos);
   holdBlock=null; fillHand();
-  finishPlacementFeedback(pos,clearInfo,{r,c,points:pts+clearInfo.bonus});
-  afterTutorialPlacement(clearInfo);
+  const clearDelay=finishPlacementFeedback(pos,clearInfo,{r,c,points:pts+clearInfo.bonus});
+  afterTutorialPlacement(clearInfo,clearDelay);
 }
 
 let _lastScore=0;
@@ -3237,12 +3749,22 @@ function updateStats(){
   }
   scoreEl.textContent=score.toLocaleString();
   $id('movesDisp').textContent=moves;
-  $id('errorsDisp').textContent=errors;
-  $id('comboDisp').textContent=combo;
-  const pct=Math.min(((multiplier-1)/2)*100,100);
-  const streakTxt=streak>=5?` 🔥${streak}`:(streak>0?` ×${streak}`:'');
-  $id('multDisp').textContent=`×${multiplier.toFixed(1)}${streakTxt}`;
-  $id('multBar').style.width=pct+'%';
+  const penalty=getErrorPenalty();
+  $id('errorsDisp').textContent=`-${penalty.toFixed(1)}`;
+  $id('comboDisp').textContent=`${combo}${comboDecayedLastTurn?' ↓':''}`;
+  const comboPct=Math.min((combo/4)*100,100);
+  const multEl=$id('multDisp');
+  if(multEl){
+    multEl.textContent=`C${combo} ×${multiplier.toFixed(1)}`;
+    multEl.classList.toggle('mult-high',multiplier>=3);
+    multEl.classList.toggle('warn',multiplier>=2&&multiplier<3);
+    multEl.classList.toggle('accent3',multiplier<2);
+  }
+  const multBarEl=$id('multBar');
+  if(multBarEl){
+    multBarEl.style.width=comboPct+'%';
+    multBarEl.classList.toggle('mult-high',multiplier>=3);
+  }
 
   // Tokens — both mobile and desktop
   const td=$id('tokensDisp');if(td)td.textContent=tokens;
@@ -3418,13 +3940,16 @@ function validateTutorialPlacement(origin,block,sr,sc){
   }
   if(tutorial.phase===3){
     const target=tutorial.targets[tutorial.step];
-    if(target&&sr===target.r&&sc===target.c) return {ok:true};
+    const required=tutorial.requiredVals?.[tutorial.step];
+    const cellVal=block?.cells?.[0]?.[2];
+    if(target&&sr===target.r&&sc===target.c&&cellVal===required) return {ok:true};
+    if(target&&sr===target.r&&sc===target.c) return {ok:false,shake:true};
   }
   if(tutorial.phase===4){
   }
   return {ok:true};
 }
-function afterTutorialPlacement(clearInfo){
+function afterTutorialPlacement(clearInfo,clearDelay=0){
   if(!tutorial.active) return;
   if(tutorial.phase===0){
     nextTutorialPhase();
@@ -3435,14 +3960,28 @@ function afterTutorialPlacement(clearInfo){
     return;
   }
   if(tutorial.phase===2){
-    setTimeout(()=>nextTutorialPhase(), 650);
+    const wait=Math.max(650,clearDelay+120);
+    setTimeout(()=>nextTutorialPhase(), wait);
     return;
   }
   if(tutorial.phase===2.5){
-    setTimeout(()=>nextTutorialPhase(), 650);
+    const wait=Math.max(650,clearDelay+120);
+    setTimeout(()=>nextTutorialPhase(), wait);
     return;
   }
   if(tutorial.phase===3){
+    const stepIdx=tutorial.step||0;
+    const target=tutorial.targets?.[stepIdx];
+    const required=tutorial.requiredVals?.[stepIdx];
+    const placedCorrect=!!(target&&required!=null&&grid[target.r]?.[target.c]===required);
+    if(clearInfo.clears===0&&placedCorrect){
+      // Tutorial fallback: if engine clear detection misses, force the row clear and continue.
+      if(grid[target.r]&&grid[target.r].every(v=>v!==0)){
+        clearLine('row',target.r,true);
+        renderBoard();
+      }
+      clearInfo.clears=1;
+    }
     if(clearInfo.clears===0){
       tutorial.needsUndo=true;
       updateUndoUI();
@@ -3466,7 +4005,7 @@ function handleTutorialLockedAction(hint,shake=false){
 
 function storeToHold(idx){
   const tutorialHoldStep=tutorial.active&&tutorial.phase===1&&tutorial.step===1;
-  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction('教程中暂时不能使用 HOLD');
+  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction(t('tut.locked.hold'));
   const block=hand[idx]; if(!block) return;
   if(!holdBlock){ holdBlock=block; hand.splice(idx,1); }
   else { const tmp=holdBlock; holdBlock=block; hand[idx]=tmp; }
@@ -3482,7 +4021,7 @@ function storeToHold(idx){
 }
 function swapHold(){
   const tutorialHoldStep=tutorial.active&&tutorial.phase===1&&tutorial.step===1;
-  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction('教程中暂时不能使用 HOLD');
+  if(isTutorialLocked()&&!tutorialHoldStep) return handleTutorialLockedAction(t('tut.locked.hold'));
   if(activeIdx!==null){ storeToHold(activeIdx); return; }
   if(holdBlock&&hand.length<3){ hand.push(holdBlock); holdBlock=null; sfxHold(); fillHand(); renderAll(); }
 }
@@ -3511,7 +4050,7 @@ function buyHammerCharge(e){
     e.stopPropagation();
   }
   if(tutorial.active&&tutorial.phase!==4){
-    handleTutorialLockedAction('教程后面会教你锤子');
+    handleTutorialLockedAction(t('tut.locked.hammer'));
     return;
   }
   if(hammers>=HAMMER_STOCK_CAP) return;
@@ -3530,7 +4069,7 @@ function buyUndoCharge(e){
   }
   const tutorialUndoOnly=tutorial.active&&tutorial.phase===3&&tutorial.needsUndo;
   if(isTutorialLocked()&&!tutorialUndoOnly){
-    handleTutorialLockedAction('教程后面会教你撤回');
+    handleTutorialLockedAction(t('tut.locked.undo'));
     return;
   }
   if(undoCharges>=UNDO_STOCK_CAP) return;
@@ -3544,7 +4083,7 @@ function buyUndoCharge(e){
 }
 function activateHammer(){
   if(tutorial.active&&tutorial.phase!==4){
-    handleTutorialLockedAction('教程后面会教你锤子');
+    handleTutorialLockedAction(t('tut.locked.hammer'));
     return;
   }
   if(hammers<=0)return;
@@ -3610,31 +4149,110 @@ function onCellClick(e){
   if(drag.state!==DragState.IDLE)return;
   const r=+e.currentTarget.dataset.row,c=+e.currentTarget.dataset.col;
   if(hammerMode){
+    if(hammerBusy) return;
     if(tutorial.active&&tutorial.phase===4&&(r!==tutorial.target?.r||c!==tutorial.target?.c)){
-      handleTutorialLockedAction('用锤子清除高亮格子',true);
+      handleTutorialLockedAction(t('tut.locked.hammerCell'),true);
       return;
     }
     if(grid[r][c]!==0){
-      // Smash animation first
-      const cell=e.currentTarget;
-      cell.classList.add('cell-smash');
-      spawnHammerParticles(cell, r, c);
-      setTimeout(()=>{
-        sfxHammer();
-        grid[r][c]=0; hammers--; hammerMode=false;
-        _placedBlocks.forEach(b=>{if(b.pos)b.pos=b.pos.filter(([br,bc])=>!(br===r&&bc===c));});
-        applyHammerMode();
-        updateStats();
-        renderAll();
-        if(tutorial.active&&tutorial.phase===4&&r===tutorial.target?.r&&c===tutorial.target?.c){
-          nextTutorialPhase();
-        }
-      }, 200);
+      useHammer(e.currentTarget, r, c);
     }
     return;
   }
   if(activeIdx===null)return;
   const b=hand[activeIdx];if(!b||b.used)return;tryPlace(activeIdx,r,c);
+}
+
+function useHammer(cell, r, c){
+  hammerBusy=true;
+  const rect=cell.getBoundingClientRect();
+  const x=rect.left+rect.width/2;
+  const y=rect.top+rect.height/2;
+
+  // 1) play hammer swing / impact cue
+  playHammer(x, y, cell);
+
+  // 2) a short delay before hit + remove
+  setTimeout(()=>{
+    cell.classList.remove('hit');
+    void cell.offsetWidth;
+    cell.classList.add('hit');
+    cell.classList.add('cell-smash');
+    spawnHammerParticles(cell, r, c);
+
+    setTimeout(()=>{
+      sfxHammer();
+      grid[r][c]=0;
+      hammers--;
+      hammerMode=false;
+      hammerBusy=false;
+      _placedBlocks.forEach(b=>{if(b.pos)b.pos=b.pos.filter(([br,bc])=>!(br===r&&bc===c));});
+      applyHammerMode();
+      updateStats();
+      renderAll();
+      if(tutorial.active&&tutorial.phase===4&&r===tutorial.target?.r&&c===tutorial.target?.c){
+        nextTutorialPhase();
+      }
+    }, 120);
+  }, 80);
+}
+
+function playHammer(x, y, cellEl){
+  // Keep signature aligned with tutorial/script ideas while reusing our richer FX.
+  void x;
+  void y;
+  triggerHammerStrikeFX(cellEl);
+}
+
+function triggerHammerStrikeFX(cellEl){
+  const cursor=$id('hammer-cursor');
+  if(cursor&&cursor.style.display!=='none'){
+    cursor.classList.remove('strike');
+    void cursor.offsetWidth;
+    cursor.classList.add('strike');
+  }
+  const board=$id('board');
+  if(board&&board.animate){
+    board.animate([
+      {transform:'translate(0,0)'},
+      {transform:'translate(2px,-2px)'},
+      {transform:'translate(-2px,2px)'},
+      {transform:'translate(0,0)'}
+    ],{duration:120,easing:'ease-out'});
+  }
+  const rect=cellEl.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const ring=document.createElement('div');
+  ring.className='hammer-impact-ring';
+  ring.style.left=`${cx-8}px`;
+  ring.style.top=`${cy-8}px`;
+  ring.style.width='16px';
+  ring.style.height='16px';
+  document.body.appendChild(ring);
+  ring.animate([
+    {transform:'scale(0.35)',opacity:0.95},
+    {transform:'scale(2.2)',opacity:0}
+  ],{
+    duration:260,
+    easing:'cubic-bezier(0.2,0.8,0.2,1)'
+  });
+  setTimeout(()=>ring.remove(),280);
+
+  const flash=document.createElement('div');
+  flash.className='hammer-impact-flash';
+  flash.style.left=`${rect.left}px`;
+  flash.style.top=`${rect.top}px`;
+  flash.style.width=`${rect.width}px`;
+  flash.style.height=`${rect.height}px`;
+  flash.style.background='radial-gradient(circle, rgba(255,235,170,0.7) 0%, rgba(255,150,70,0.25) 55%, rgba(255,100,60,0) 100%)';
+  document.body.appendChild(flash);
+  flash.animate([
+    {opacity:0,transform:'scale(0.9)'},
+    {opacity:1,transform:'scale(1.12)'},
+    {opacity:0,transform:'scale(1.3)'}
+  ],{duration:220,easing:'ease-out'});
+  setTimeout(()=>flash.remove(),240);
 }
 
 function spawnHammerParticles(cellEl, r, c){
@@ -3679,27 +4297,27 @@ function tryPlace(hi,sr,sc){
   const {pts,clearInfo}=applyPlacementRewards(block,pos);
   pushUndoSnapshot(hi,block,snapshot,pos);
   hand[hi]=null;hand=hand.filter(Boolean);fillHand();activeIdx=null;
-  finishPlacementFeedback(pos,clearInfo,{r:sr,c:sc,points:pts+clearInfo.bonus});
-  afterTutorialPlacement(clearInfo);
+  const clearDelay=finishPlacementFeedback(pos,clearInfo,{r:sr,c:sc,points:pts+clearInfo.bonus});
+  afterTutorialPlacement(clearInfo,clearDelay);
 }
 
 // ══════════════════════════════════════════════════════
 // CLEAR — detect first, animate second
 // ══════════════════════════════════════════════════════
 function checkClear(pos){
-  let bonus=0,clears=0,tokenGain=0;
+  let bonus=0,clears=0,tokenBase=0;
   const plans=[];
   const rows=new Set(pos.map(([r])=>r)),cols=new Set(pos.map(([,c])=>c));
   const boxes=new Set(pos.map(([r,c])=>`${Math.floor(r/3)},${Math.floor(c/3)}`));
   rows.forEach(r=>{
     if(grid[r].every(v=>v)&&lineValid('row',r)){
-      bonus+=80;tokens++;tokenGain++;clears++;
+      bonus+=80;tokenBase+=1;clears++;
       plans.push({kind:'row',idx:r,cells:Array.from({length:9},(_,c)=>[r,c])});
     }
   });
   cols.forEach(c=>{
     if(grid.every(row=>row[c])&&lineValid('col',c)){
-      bonus+=80;tokens++;tokenGain++;clears++;
+      bonus+=80;tokenBase+=1;clears++;
       plans.push({kind:'col',idx:c,cells:Array.from({length:9},(_,r)=>[r,c])});
     }
   });
@@ -3707,13 +4325,29 @@ function checkClear(pos){
     const[br,bc]=key.split(',').map(Number);
     let full=true;for(let dr=0;dr<3;dr++)for(let dc=0;dc<3;dc++)if(!grid[br*3+dr][bc*3+dc])full=false;
     if(full&&boxValid(br,bc)){
-      bonus+=120;tokens+=2;tokenGain+=2;clears++;
+      bonus+=120;tokenBase+=2;clears++;
       const order=[[1,1],[0,1],[1,0],[1,2],[2,1],[0,0],[0,2],[2,0],[2,2]];
       plans.push({kind:'box',br,bc,cells:order.map(([dr,dc])=>[br*3+dr,bc*3+dc])});
     }
   });
-  combo=clears>0?combo+1:0;
-  return {bonus,clears,tokenGain,comboLevel:combo,plans};
+  // Tutorial safety net: phase 3 step clears must always trigger when correct block is placed.
+  if(tutorial.active&&tutorial.phase===3){
+    const step=tutorial.step||0;
+    const target=tutorial.targets?.[step];
+    const required=tutorial.requiredVals?.[step];
+    const touchedTarget=target?pos.some(([r,c])=>r===target.r&&c===target.c):false;
+    if(target&&required!=null&&touchedTarget&&grid[target.r][target.c]===required){
+      const row=target.r;
+      const hasRowPlan=plans.some(plan=>plan.kind==='row'&&plan.idx===row);
+      if(!hasRowPlan&&grid[row].every(v=>v)){
+        bonus+=80;
+        tokenBase+=1;
+        clears++;
+        plans.push({kind:'row',idx:row,cells:Array.from({length:9},(_,c)=>[row,c])});
+      }
+    }
+  }
+  return {bonus,clears,tokenBase,tokenGain:0,comboLevel:combo,plans};
 }
 function lineValid(type,idx){const nums=type==='row'?grid[idx]:grid.map(row=>row[idx]);return new Set(nums).size===9&&!nums.includes(0);}
 function boxValid(br,bc){const n=[];for(let dr=0;dr<3;dr++)for(let dc=0;dc<3;dc++)n.push(grid[br*3+dr][bc*3+dc]);return new Set(n).size===9;}
@@ -3727,10 +4361,10 @@ function clearBox(br,bc,skipRender=false){
   _placedBlocks.forEach(b=>{if(b.pos)b.pos=b.pos.filter(([r,c])=>!(Math.floor(r/3)===br&&Math.floor(c/3)===bc));});
   if(!skipRender) renderBoard();
 }
-function animateClearBurst(plans){
+function animateClearBurst(plans,startOffset=0){
   let maxDelay=0;
   plans.forEach((plan,planIdx)=>{
-    const baseDelay=planIdx*70;
+    const baseDelay=startOffset+planIdx*70;
     const step=plan.kind==='box'?34:24;
     const cls=plan.kind==='box'?'cell-clear-box':'cell-clear-line';
     plan.cells.forEach(([r,c],cellIdx)=>{
@@ -3778,31 +4412,33 @@ function spawnTokenText(x,y,value){
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),850);
 }
-function spawnTokenParticle(startX,startY,endX,endY,delay=0){
-  const p=document.createElement('div');
-  p.className='token-particle';
-  p.style.left=`${startX-4}px`;
-  p.style.top=`${startY-4}px`;
-  document.body.appendChild(p);
-  const dx=endX-startX;
-  const dy=endY-startY;
-  p.animate([
-    {transform:'translate(0,0) scale(1)',opacity:1},
-    {transform:`translate(${dx}px, ${dy}px) scale(0.5)`,opacity:0}
-  ],{
-    duration:600,
-    delay,
-    easing:'cubic-bezier(0.2, 0.8, 0.2, 1)'
-  });
-  setTimeout(()=>p.remove(),640+delay);
+function spawnToken(x,y){
+  const el=document.createElement('div');
+  el.className='token-pop';
+  el.style.left=`${x}px`;
+  el.style.top=`${y}px`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  return el;
+}
+function flyToCounter(el,targetX,targetY){
+  if(!el) return;
+  // keep a brief pop first, then launch
+  setTimeout(()=>{
+    el.style.left=`${targetX}px`;
+    el.style.top=`${targetY}px`;
+    el.style.transform='translate(-50%,-50%) scale(0.6)';
+    el.style.opacity='0.6';
+  },120);
+  setTimeout(()=>el.remove(),540);
 }
 function animateTokenHUD(){
   ['tokensDisp','tokensDispMob'].forEach(id=>{
     const el=$id(id);
     if(!el) return;
-    el.classList.remove('token-pop');
+    el.classList.remove('token-hud-pop');
     void el.offsetWidth;
-    el.classList.add('token-pop');
+    el.classList.add('token-hud-pop');
   });
 }
 function runTokenFeedback(info){
@@ -3815,13 +4451,16 @@ function runTokenFeedback(info){
   const hx=hr.left+hr.width*0.5;
   const hy=hr.top+hr.height*0.5;
   spawnTokenText(center.x,center.y,info.tokenGain);
-  const particleCount=Math.max(4,Math.min(12,info.tokenGain*3));
-  for(let i=0;i<particleCount;i++){
-    const jitterX=(Math.random()-0.5)*22;
-    const jitterY=(Math.random()-0.5)*18;
-    spawnTokenParticle(center.x+jitterX,center.y+jitterY,hx,hy,i*20);
+  const amount=Math.max(1,Math.min(5,Math.round(info.tokenGain)));
+  for(let i=0;i<amount;i++){
+    setTimeout(()=>{
+      const jitterX=(Math.random()-0.5)*22;
+      const jitterY=(Math.random()-0.5)*18;
+      const tokenEl=spawnToken(center.x+jitterX,center.y+jitterY);
+      flyToCounter(tokenEl,hx,hy);
+    },80+i*60);
   }
-  setTimeout(()=>animateTokenHUD(),380);
+  setTimeout(()=>animateTokenHUD(),250);
 }
 function showComboText(comboLevel, plans=[]){
   if(comboLevel<=0) return;
@@ -3859,25 +4498,26 @@ function applyClearPlans(plans){
     else clearBox(plan.br,plan.bc,true);
   });
   renderBoard();
+  updateStats();
 }
 function runClearFeedback(info){
   if(!info||!info.clears||!info.plans.length) return 0;
-  const burstMs=animateClearBurst(info.plans);
-  setTimeout(()=>runTokenFeedback(info),70);
-  setTimeout(()=>shakeBoard(info.comboLevel, info.plans),60);
-  setTimeout(()=>showComboText(info.comboLevel, info.plans),90);
-  setTimeout(()=>flashComboScreen(info.comboLevel),90);
+  const burstMs=animateClearBurst(info.plans,80);
+  setTimeout(()=>runTokenFeedback(info),180);
+  setTimeout(()=>shakeBoard(info.comboLevel, info.plans),120);
+  setTimeout(()=>showComboText(info.comboLevel, info.plans),120);
+  setTimeout(()=>flashComboScreen(info.comboLevel),120);
   info.plans.forEach((plan,i)=>{
     setTimeout(()=>{
       if(plan.kind==='box') sfxClearBox();
       else sfxClearLine();
-    },70+i*40);
+    },120+i*40);
   });
   setTimeout(()=>{
     sfxCombo(info.comboLevel);
     const cd=document.getElementById('comboDisp');
     if(cd){cd.classList.remove('combo-flash');void cd.offsetWidth;cd.classList.add('combo-flash');}
-  },140);
+  },160);
   const clearDelay=Math.max(280,burstMs+40);
   setTimeout(()=>applyClearPlans(info.plans),clearDelay);
   return clearDelay;
@@ -3905,6 +4545,7 @@ function undoPlace(){
   grid=snap.gs; snap.block.used=false; snap.block.pos=null;
   _placedBlocks=_placedBlocks.filter(b=>b!==snap.block);
   score=snap.sb; multiplier=snap.mb; moves=Math.max(0,moves-1); combo=snap.cb; streak=snap.sk||0;
+  comboDecayedLastTurn=false;
   // Restore to hand or hold depending on source
   if(snap.hi==='HOLD'){
     holdBlock=snap.block;
@@ -3934,10 +4575,10 @@ function triggerGameOver(){
   const isRec=submitScore(score,settings.difficulty,moves,combo);
   const filled=grid.flat().filter(v=>v).length;
   recordRunAtGameOver(filled);
-  document.getElementById('go-title').textContent='GAME OVER';
-  document.getElementById('go-score').textContent=`${score.toLocaleString()} pts`;
-  document.getElementById('go-sub').textContent=`Moves: ${moves}  ·  Errors: ${errors}  ·  Combo: ${combo}`;
-  document.getElementById('go-detail').textContent=`${filled}/81 filled  ·  ${settings.difficulty.toUpperCase()}`;
+  document.getElementById('go-title').textContent=t('go.title');
+  document.getElementById('go-score').textContent=t('go.score',{score:score.toLocaleString()});
+  document.getElementById('go-sub').textContent=t('go.sub',{moves,errors,combo});
+  document.getElementById('go-detail').textContent=t('go.detail',{filled,diff:t(`menu.diff.${settings.difficulty}`)});
   document.getElementById('go-record').style.display=isRec?'block':'none';
   document.getElementById('go-overlay').classList.add('show');
 }
@@ -4175,8 +4816,11 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
+loadLang();
+loadVisualTheme();
 loadSettings();
 loadVol();
+applyLang();
 document.body.classList.add('zoo-mode');
 window.addEventListener('beforeunload',saveGame);
 function handleFirstAudioUnlock(){
