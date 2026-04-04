@@ -781,10 +781,13 @@ body[data-theme="dark"] .cell.hit{
   .score-bar-item{padding:5px 2px;}
   .mult-track{width:44px!important;}
   .mobile-tools-bar{
-    display:grid;
-    grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);
+    display:flex;
+    flex-wrap:nowrap;
     gap:6px;
     margin:6px 0 8px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
   }
   .mobile-top-token,
   .mobile-top-tool{
@@ -802,6 +805,33 @@ body[data-theme="dark"] .cell.hit{
     letter-spacing:0.08em;
     text-transform:uppercase;
     padding:4px 6px;
+    flex:0 0 auto;
+  }
+  .mobile-top-tool-wrap{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    flex:0 0 auto;
+  }
+  .mobile-top-buy{
+    min-height:34px;
+    border:1px solid var(--border2);
+    border-radius:8px;
+    background:rgba(40,212,255,0.08);
+    color:var(--accent2);
+    font-family:'DM Mono',monospace;
+    font-size:0.36rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 6px;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .mobile-top-buy:disabled{
+    opacity:0.35;
+    color:var(--muted2);
+    border-color:var(--border);
+    cursor:not-allowed;
   }
   .mobile-top-token-num,
   .mobile-top-tool-count{
@@ -1254,14 +1284,20 @@ body[data-theme="dark"] .cell.hit{
             <span class="mobile-top-token-num" id="tokensDispTop">0</span>
             <span data-i18n="game.tokens">TOKENS</span>
           </div>
-          <button class="mobile-top-tool" id="undoToolTop" onclick="undoPlace()">
-            <span class="mobile-top-tool-name" data-i18n="tool.undo">UNDO</span>
-            <span class="mobile-top-tool-count" id="undoCountTop">×1</span>
-          </button>
-          <button class="mobile-top-tool" id="hammerToolTop" onclick="activateHammer()">
-            <span class="mobile-top-tool-name" data-i18n="tool.hammer">HAMMER</span>
-            <span class="mobile-top-tool-count" id="hammerCountTop">×2</span>
-          </button>
+          <div class="mobile-top-tool-wrap">
+            <button class="mobile-top-tool" id="undoToolTop" onclick="undoPlace()">
+              <span class="mobile-top-tool-name" data-i18n="tool.undo">UNDO</span>
+              <span class="mobile-top-tool-count" id="undoCountTop">×1</span>
+            </button>
+            <button class="mobile-top-buy" id="undoBuyBtnTop" onclick="buyUndoCharge(event)" data-i18n="tool.buy">Buy</button>
+          </div>
+          <div class="mobile-top-tool-wrap">
+            <button class="mobile-top-tool" id="hammerToolTop" onclick="activateHammer()">
+              <span class="mobile-top-tool-name" data-i18n="tool.hammer">HAMMER</span>
+              <span class="mobile-top-tool-count" id="hammerCountTop">×2</span>
+            </button>
+            <button class="mobile-top-buy" id="hammerBuyBtnTop" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
+          </div>
         </div>
       </div>
 
@@ -3968,6 +4004,11 @@ function updateStats(){
     hbd.disabled=!canBuyHammer;
     hbd.title=`Buy +1 hammer (${hammerCost}⬡)`;
   }
+  const hbt=$id('hammerBuyBtnTop');
+  if(hbt){
+    hbt.disabled=!canBuyHammer;
+    hbt.title=`Buy +1 hammer (${hammerCost}⬡)`;
+  }
 
   // Hammer tool state — mobile + desktop
   const ht=$id('hammerTool');
@@ -4029,6 +4070,11 @@ function updateUndoUI(){
   if(ubd){
     ubd.disabled=!canBuyUndo;
     ubd.title=`Buy +1 undo (${undoCost}⬡)`;
+  }
+  const ubt=$id('undoBuyBtnTop');
+  if(ubt){
+    ubt.disabled=!canBuyUndo;
+    ubt.title=`Buy +1 undo (${undoCost}⬡)`;
   }
   const utt=$id('undoToolTop');
   if(utt) utt.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
