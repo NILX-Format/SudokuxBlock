@@ -724,7 +724,8 @@ body[data-theme="dark"] .cell.hit{
 .tray-slot:hover:not(.used){border-color:var(--border2);background:var(--surface2);}
 .tray-slot:active{cursor:grabbing;}
 .block-mini{display:grid;gap:2px;flex-shrink:0;}
-.bm-cell{width:22px;height:22px;border-radius:1px;}
+.tray .block-mini{--tray-cell-size:22px;}
+.tray .bm-cell{width:var(--tray-cell-size);height:var(--tray-cell-size);border-radius:2px;}
 .bm-cell.e{background:transparent;}
 .tray-meta{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
 .tray-name{font-size:0.48rem;color:var(--muted2);letter-spacing:0.06em;text-align:center;}
@@ -815,7 +816,9 @@ body[data-theme="dark"] .cell.hit{
     border:1px solid rgba(255,255,255,0.04);
     border-radius:10px;
   }
-  .bm-cell{width:16px!important;height:16px!important;}
+  .tray .block-mini{--tray-cell-size:20px;}
+  .tray .bm-cell{border-radius:3px;}
+  .tray .bm-cell svg{width:92%;height:92%;}
   .tray-name{font-size:0.42rem;}
   .tray-hint{font-size:0.34rem;opacity:0.75;}
   .hand-zone-header{margin-bottom:10px;align-items:flex-start;}
@@ -929,6 +932,7 @@ body[data-theme="dark"] .cell.hit{
   .hand-row{gap:6px;}
   .hold-slot{width:60px;min-height:70px;}
   .hold-slot .hold-preview{min-height:28px;}
+  .tray .block-mini{--tray-cell-size:18px;}
   .tray-slot{padding:6px 2px 4px;}
   .tray-name{font-size:0.38rem;}
   .tray-hint{display:none;}
@@ -1401,47 +1405,47 @@ body[data-theme="dark"] .cell.hit{
   <div class="modal-box" style="max-width:420px;text-align:left;" onclick="event.stopPropagation()">
 
     <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;">
-      <div class="modal-title" style="font-size:2rem;color:var(--accent2)">HOW TO PLAY</div>
+      <div class="modal-title" style="font-size:2rem;color:var(--accent2)" data-i18n="help.title">HOW TO PLAY</div>
       <button onclick="hideHelp()" style="background:transparent;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;padding:0 4px;">✕</button>
     </div>
 
     <div class="help-section">
-      <div class="help-heading">Basics</div>
-      <div class="help-row"><span class="help-key">Drag / Tap</span><span>Select a block from your hand, then tap a cell to place it</span></div>
-      <div class="help-row"><span class="help-key">Hold</span><span>Store one block to use later — tap hold slot to swap</span></div>
-      <div class="help-row"><span class="help-key">Reroll</span><span>Discard your hand and draw 3 new blocks (base 2 ⬡, scales with purchases)</span></div>
-      <div class="help-row"><span class="help-key">Hammer</span><span>Remove one placed cell (buy +1 when empty, base 2 ⬡, scales)</span></div>
-      <div class="help-row"><span class="help-key">Undo</span><span>Start with 1 free use; buy +1 (base 3 ⬡, scales)</span></div>
+      <div class="help-heading" data-i18n="help.basics">Basics</div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.dragTap">Drag / Tap</span><span data-i18n="help.basics.dragTap">Select a block from your hand, then tap a cell to place it</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.hold">Hold</span><span data-i18n="help.basics.hold">Store one block to use later — tap hold slot to swap</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.reroll">Reroll</span><span data-i18n="help.basics.reroll">Discard your hand and draw 3 new blocks (base 2 ⬡, scales with purchases)</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.hammer">Hammer</span><span data-i18n="help.basics.hammer">Remove one placed cell (buy +1 when empty, base 2 ⬡, scales)</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.undo">Undo</span><span data-i18n="help.basics.undo">Start with 1 free use; buy +1 (base 3 ⬡, scales)</span></div>
     </div>
 
     <div class="help-section">
-      <div class="help-heading">Clearing</div>
-      <div class="help-body">
+      <div class="help-heading" data-i18n="help.clearing">Clearing</div>
+      <div class="help-body" data-i18n-html="help.clearing.body">
         Fill a complete <b>row</b>, <b>column</b>, or <b>3×3 box</b> with <b>no duplicate numbers</b> to clear it and earn bonus points + ⬡ tokens.<br><br>
         If a row/col/box fills up <b>with duplicates</b>, it won't clear — the conflicting cells turn <span style="color:var(--danger)">red</span>. Use Hammer or place carefully to fix it.
       </div>
     </div>
 
     <div class="help-section">
-      <div class="help-heading">Scoring</div>
-      <div class="help-row"><span class="help-key">Place block</span><span>+10 pts per cell × multiplier</span></div>
-      <div class="help-row"><span class="help-key">Clear row/col</span><span>+80 pts + 1 ⬡</span></div>
-      <div class="help-row"><span class="help-key">Clear box</span><span>+120 pts + 2 ⬡</span></div>
-      <div class="help-row"><span class="help-key">Combo</span><span>Clear keeps heat up, no-clear decays by 1</span></div>
+      <div class="help-heading" data-i18n="help.scoring">Scoring</div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.placeBlock">Place block</span><span data-i18n="help.scoring.placeBlock">+10 pts per cell × multiplier</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.clearRowCol">Clear row/col</span><span data-i18n="help.scoring.clearRowCol">+80 pts + 1 ⬡</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.clearBox">Clear box</span><span data-i18n="help.scoring.clearBox">+120 pts + 2 ⬡</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.combo">Combo</span><span data-i18n="help.scoring.combo">Clear keeps heat up, no-clear decays by 1</span></div>
     </div>
 
     <div class="help-section">
-      <div class="help-heading">Zoo Mode 🐾</div>
-      <div class="help-body">
+      <div class="help-heading" data-i18n="help.zoo">Zoo Mode 🐾</div>
+      <div class="help-body" data-i18n-html="help.zoo.body">
         Switch between numbers and animals using the <b>🐾 ZOO</b> toggle in the top bar. Same rules apply — each animal represents a number 1–9.
       </div>
     </div>
 
     <div class="help-section" style="border:none;padding-bottom:0;">
-      <div class="help-heading">Keyboard</div>
-      <div class="help-row"><span class="help-key">ESC</span><span>Deselect current block</span></div>
-      <div class="help-row"><span class="help-key">Ctrl+Z</span><span>Undo last move</span></div>
-      <div class="help-row"><span class="help-key">P</span><span>Pause / Resume</span></div>
+      <div class="help-heading" data-i18n="help.keyboard">Keyboard</div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.esc">ESC</span><span data-i18n="help.keyboard.esc">Deselect current block</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.ctrlz">Ctrl+Z</span><span data-i18n="help.keyboard.ctrlz">Undo last move</span></div>
+      <div class="help-row"><span class="help-key" data-i18n="help.key.p">P</span><span data-i18n="help.keyboard.p">Pause / Resume</span></div>
     </div>
 
     <button class="modal-btn primary" onclick="hideHelp()" style="margin-top:20px;" data-i18n="common.gotIt">Got it!</button>
@@ -1952,8 +1956,11 @@ function showGameSettings(){
 }
 function hideGameSettings(){document.getElementById('game-settings-overlay').classList.remove('show');}
 function confirmRestart(){
+  const canConfirm=typeof window.confirm==='function';
+  const ok=canConfirm?window.confirm(t('confirm.restart')):true;
+  if(!ok) return;
   hideGameSettings();
-  if(confirm(t('confirm.restart'))) newGame();
+  newGame();
 }
 function quitToHome(){hideGameSettings();bgmStop();goScreen('screen-menu');}
 // Sync quick vol slider in game-settings to main vol
@@ -2369,6 +2376,38 @@ const LANG={
     'lb.meta':'{moves} 步 · 连击 {combo}',
     'confirm.restart':'要重新开始吗？当前进度会丢失。',
     'confirm.clearRecords':'确定清空所有记录吗？',
+    'help.title':'玩法说明',
+    'help.basics':'基础操作',
+    'help.key.dragTap':'拖拽 / 点击',
+    'help.key.hold':'暂存',
+    'help.key.reroll':'重抽',
+    'help.key.hammer':'锤子',
+    'help.key.undo':'撤回',
+    'help.basics.dragTap':'从手牌选择一个方块，然后点击棋盘格子放置。',
+    'help.basics.hold':'可暂存 1 个方块，点击 HOLD 区可交换。',
+    'help.basics.reroll':'丢弃当前手牌并重抽 3 个方块（基础 2 ⬡，随购买递增）。',
+    'help.basics.hammer':'移除 1 个已放置格子（基础 2 ⬡，可购买补充）。',
+    'help.basics.undo':'每局赠送 1 次撤回，可用代币购买额外次数（基础 3 ⬡）。',
+    'help.clearing':'消除规则',
+    'help.clearing.body':'填满整行、整列或 3×3 宫，且<b>数字不重复</b>时即可消除并获得分数与 ⬡ 代币。<br><br>若行/列/宫填满但出现<b>重复数字</b>，不会消除，冲突格会变成<span style=\"color:var(--danger)\">红色</span>。可用锤子修正。',
+    'help.scoring':'计分',
+    'help.key.placeBlock':'放置方块',
+    'help.key.clearRowCol':'清除行/列',
+    'help.key.clearBox':'清除九宫格',
+    'help.key.combo':'连击',
+    'help.scoring.placeBlock':'+10 分 / 格 × 倍率',
+    'help.scoring.clearRowCol':'+80 分 + 1 ⬡',
+    'help.scoring.clearBox':'+120 分 + 2 ⬡',
+    'help.scoring.combo':'持续清除会升温；未清除回合会衰减 1 层',
+    'help.zoo':'动物模式 🐾',
+    'help.zoo.body':'可在顶部切换数字 / 动物图标显示。规则不变：每个动物对应数字 1–9。',
+    'help.keyboard':'键盘',
+    'help.key.esc':'ESC',
+    'help.key.ctrlz':'Ctrl+Z',
+    'help.key.p':'P',
+    'help.keyboard.esc':'取消当前选中的方块',
+    'help.keyboard.ctrlz':'撤回上一步',
+    'help.keyboard.p':'暂停 / 继续',
   },
   en:{
     'menu.play':'Play',
@@ -2451,6 +2490,38 @@ const LANG={
     'lb.meta':'{moves} moves · {combo} combo',
     'confirm.restart':'Restart this game? Your current progress will be lost.',
     'confirm.clearRecords':'Clear all records?',
+    'help.title':'HOW TO PLAY',
+    'help.basics':'Basics',
+    'help.key.dragTap':'Drag / Tap',
+    'help.key.hold':'Hold',
+    'help.key.reroll':'Reroll',
+    'help.key.hammer':'Hammer',
+    'help.key.undo':'Undo',
+    'help.basics.dragTap':'Select a block from your hand, then tap a cell to place it.',
+    'help.basics.hold':'Store one block to use later — tap hold slot to swap.',
+    'help.basics.reroll':'Discard your hand and draw 3 new blocks (base 2 ⬡, scales with purchases).',
+    'help.basics.hammer':'Remove one placed cell (buy +1 when empty, base 2 ⬡, scales).',
+    'help.basics.undo':'Start with 1 free use; buy +1 (base 3 ⬡, scales).',
+    'help.clearing':'Clearing',
+    'help.clearing.body':'Fill a complete <b>row</b>, <b>column</b>, or <b>3×3 box</b> with <b>no duplicate numbers</b> to clear it and earn bonus points + ⬡ tokens.<br><br>If a row/col/box fills up <b>with duplicates</b>, it won’t clear — the conflicting cells turn <span style=\"color:var(--danger)\">red</span>. Use Hammer or place carefully to fix it.',
+    'help.scoring':'Scoring',
+    'help.key.placeBlock':'Place block',
+    'help.key.clearRowCol':'Clear row/col',
+    'help.key.clearBox':'Clear box',
+    'help.key.combo':'Combo',
+    'help.scoring.placeBlock':'+10 pts per cell × multiplier',
+    'help.scoring.clearRowCol':'+80 pts + 1 ⬡',
+    'help.scoring.clearBox':'+120 pts + 2 ⬡',
+    'help.scoring.combo':'Clear keeps heat up, no-clear decays by 1',
+    'help.zoo':'Zoo Mode 🐾',
+    'help.zoo.body':'Switch between numbers and animals using the <b>🐾 ZOO</b> toggle in the top bar. Same rules apply — each animal represents a number 1–9.',
+    'help.keyboard':'Keyboard',
+    'help.key.esc':'ESC',
+    'help.key.ctrlz':'Ctrl+Z',
+    'help.key.p':'P',
+    'help.keyboard.esc':'Deselect current block',
+    'help.keyboard.ctrlz':'Undo last move',
+    'help.keyboard.p':'Pause / Resume',
   }
 };
 let currentLang='en';
@@ -2462,6 +2533,9 @@ function t(key,vars={}){
 function applyLang(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     el.textContent=t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    el.innerHTML=t(el.dataset.i18nHtml);
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{
     el.title=t(el.dataset.i18nTitle);
@@ -3398,7 +3472,8 @@ function renderTray(){
     });
     const cells=block.cells,mr=Math.max(...cells.map(([r])=>r)),mc=Math.max(...cells.map(([,c])=>c));
     const mini=document.createElement('div');mini.className='block-mini';
-    mini.style.gridTemplateColumns=`repeat(${mc+1},20px)`;mini.style.gridTemplateRows=`repeat(${mr+1},20px)`;
+    mini.style.gridTemplateColumns=`repeat(${mc+1},var(--tray-cell-size,22px))`;
+    mini.style.gridTemplateRows=`repeat(${mr+1},var(--tray-cell-size,22px))`;
     for(let r=0;r<=mr;r++)for(let c=0;c<=mc;c++){
       const bmc=document.createElement('div');bmc.className='bm-cell';
       const m=cells.find(([cr,cc])=>cr===r&&cc===c);
