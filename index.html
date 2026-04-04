@@ -810,12 +810,20 @@ body[data-theme="dark"] .cell.hit{
   .board-container{width:100%;order:1;}
   .last-block-warn{order:2;margin-top:6px;}
   .tray{gap:4px;}
+  .tray{
+    overflow-x:auto;
+    overflow-y:hidden;
+    align-items:stretch;
+    -webkit-overflow-scrolling:touch;
+  }
   .tray-slot{
     padding:8px 2px 6px;
     background:rgba(255,255,255,0.02);
     border:1px solid rgba(255,255,255,0.04);
     border-radius:10px;
     justify-content:center;
+    flex:0 0 auto;
+    min-width:84px;
   }
   .tray .block-mini{--tray-cell-size:24px;}
   .tray .bm-cell{border-radius:3px;}
@@ -934,7 +942,7 @@ body[data-theme="dark"] .cell.hit{
   .hold-slot{width:60px;min-height:70px;}
   .hold-slot .hold-preview{min-height:28px;}
   .tray .block-mini{--tray-cell-size:21px;}
-  .tray-slot{padding:6px 2px 4px;}
+  .tray-slot{padding:6px 2px 4px;min-width:72px;}
 }
 
 /* Mobile menu + settings */
@@ -3021,7 +3029,7 @@ function restoreGame(save){
   emptyTurns=Number(save.emptyTurns)||0;
   comboDecayedLastTurn=false;
   tokens=Number(save.tokens)||0;
-  hammers=Number(save.hammers)||2;
+  hammers=Number.isFinite(Number(save.hammers))?Math.max(0,Number(save.hammers)):2;
   undoCharges=Number.isFinite(Number(save.undoCharges))?Math.max(0,Number(save.undoCharges)):UNDO_GIFT;
   toolBought={
     undoBought:Number(save.toolBought?.undoBought)||0,
@@ -3436,6 +3444,12 @@ function hasDup(r,c,v){
 
 function renderTray(){
   const tray=document.getElementById('tray');tray.innerHTML='';
+  if(window.innerWidth<=600){
+    const boardCell=Math.round(getCsz());
+    tray.style.setProperty('--tray-cell-size',`${boardCell}px`);
+  }else{
+    tray.style.removeProperty('--tray-cell-size');
+  }
   hand.forEach((block,i)=>{
     if(!block||block.used)return;
     const draggingOrigin=drag.state!==DragState.IDLE&&drag.sourceIdx===i;
