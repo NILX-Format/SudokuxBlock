@@ -757,17 +757,17 @@ body[data-theme="dark"] .cell.hit{
     gap:8px;
     border-bottom:none;
   }
-  .topbar-logo{font-size:1.05rem;line-height:1;text-align:center;}
+  .topbar-logo{font-size:1.18rem;line-height:1;text-align:center;}
   .topbar-right{
     gap:4px;
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
   }
   .topbar-btn{
-    font-size:0.36rem;
-    padding:6px 4px;
+    font-size:0.42rem;
+    padding:7px 4px;
     letter-spacing:0.06em;
-    min-height:30px;
+    min-height:34px;
   }
 
   /* Single column layout */
@@ -786,9 +786,9 @@ body[data-theme="dark"] .cell.hit{
     flex:1 1 auto;
     min-width:0;
   }
-  .score-bar-num{font-size:1.1rem;}
-  .score-bar-lbl{font-size:0.3rem;}
-  .score-bar-item{padding:5px 2px;}
+  .score-bar-num{font-size:1.28rem;}
+  .score-bar-lbl{font-size:0.34rem;}
+  .score-bar-item{padding:6px 3px;}
   .mult-track{width:44px!important;}
   .mobile-tools-bar{
     display:flex;
@@ -813,7 +813,7 @@ body[data-theme="dark"] .cell.hit{
     gap:6px;
     color:var(--muted2);
     font-family:'DM Mono',monospace;
-    font-size:0.4rem;
+    font-size:0.45rem;
     letter-spacing:0.08em;
     text-transform:uppercase;
     padding:4px 6px;
@@ -832,7 +832,7 @@ body[data-theme="dark"] .cell.hit{
     background:rgba(40,212,255,0.08);
     color:var(--accent2);
     font-family:'DM Mono',monospace;
-    font-size:0.36rem;
+    font-size:0.42rem;
     letter-spacing:0.08em;
     text-transform:uppercase;
     padding:4px 6px;
@@ -848,7 +848,7 @@ body[data-theme="dark"] .cell.hit{
   .mobile-top-token-num,
   .mobile-top-tool-count{
     font-family:'Bebas Neue',sans-serif;
-    font-size:1.05rem;
+    font-size:1.18rem;
     line-height:1;
     color:var(--accent2);
   }
@@ -867,6 +867,7 @@ body[data-theme="dark"] .cell.hit{
   /* Status bar */
   /* Board full width */
   #board{width:100%!important;height:auto!important;aspect-ratio:1/1;}
+  .cell svg{width:84%;height:84%;}
   .board-container{width:100%;}
 
   /* Mobile order: board -> hand/hold -> toolbar */
@@ -909,7 +910,7 @@ body[data-theme="dark"] .cell.hit{
     flex:0 0 auto;
     min-width:84px;
   }
-  .tray .block-mini{--tray-cell-size:24px;}
+  .tray .block-mini{--tray-cell-size:26px;}
   .tray .bm-cell{border-radius:3px;}
   .tray .bm-cell svg{width:95%;height:95%;}
   .tray-meta{display:none;}
@@ -928,7 +929,7 @@ body[data-theme="dark"] .cell.hit{
   .hand-row{display:flex;align-items:stretch;gap:8px;}
   .hand{flex:1;min-width:0;}
   .hold-slot{
-    width:72px;min-height:78px;flex-shrink:0;
+    width:80px;min-height:88px;flex-shrink:0;
     border:1px dashed var(--accent2);
     display:flex;align-items:center;justify-content:center;flex-direction:column;
     border-radius:12px;
@@ -945,10 +946,10 @@ body[data-theme="dark"] .cell.hit{
     background:rgba(158,255,59,0.08)!important;
   }
   .hold-slot .mob-tool-top{gap:1px;}
-  .hold-slot .mob-tool-name{font-size:0.3rem;letter-spacing:0.14em;color:var(--accent2);}
-  .hold-slot .mob-tool-count{font-size:0.9rem;}
-  .hold-slot .hold-preview{margin-top:2px;min-height:34px;width:100%;}
-  .hold-slot .hold-empty-hint{font-size:0.28rem;}
+  .hold-slot .mob-tool-name{font-size:0.34rem;letter-spacing:0.14em;color:var(--accent2);}
+  .hold-slot .mob-tool-count{font-size:1rem;}
+  .hold-slot .hold-preview{margin-top:2px;min-height:40px;width:100%;}
+  .hold-slot .hold-empty-hint{font-size:0.32rem;}
 
   /* Hide desktop right panel entirely */
   .right-panel{display:none!important;}
@@ -998,7 +999,7 @@ body[data-theme="dark"] .cell.hit{
   .last-block-warn{font-size:0.46rem;}
 
   /* Cell font */
-  .cell{font-size:0.72rem!important;}
+  .cell{font-size:0.86rem!important;}
 
   /* Modals */
   .modal-box{padding:24px 18px;width:96%;}
@@ -1008,8 +1009,8 @@ body[data-theme="dark"] .cell.hit{
 @media(max-width:380px){
   .topbar-logo{font-size:0.9rem;}
   .topbar-right{grid-template-columns:1fr 1fr 1fr 1fr;}
-  .topbar-btn{padding:5px 4px;font-size:0.32rem;}
-  .score-bar-num{font-size:0.95rem;}
+  .topbar-btn{padding:6px 4px;font-size:0.36rem;}
+  .score-bar-num{font-size:1.08rem;}
   .mob-tool-count{font-size:0.9rem;}
   .menu-logo{font-size:3rem;}
   .menu-meta{gap:6px;font-size:0.42rem;letter-spacing:0.12em;}
@@ -1019,9 +1020,10 @@ body[data-theme="dark"] .cell.hit{
   .hand-inline-tools{gap:4px;}
   .btn-reroll{padding:3px 6px;font-size:0.4rem;}
   .hand-row{gap:6px;}
-  .hold-slot{width:60px;min-height:70px;}
-  .hold-slot .hold-preview{min-height:28px;}
-  .tray .block-mini{--tray-cell-size:21px;}
+  .hold-slot{width:70px;min-height:78px;}
+  .hold-slot .hold-preview{min-height:34px;}
+  .tray .block-mini{--tray-cell-size:23px;}
+  .cell svg{width:82%;height:82%;}
   .tray-slot{padding:6px 2px 4px;min-width:72px;}
 }
 
