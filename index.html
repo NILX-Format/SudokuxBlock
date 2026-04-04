@@ -863,6 +863,11 @@ body[data-theme="dark"] .cell.hit{
     background:rgba(255,45,85,0.08);
   }
   .mobile-top-tool-name{color:var(--text);}
+  .mobile-top-svg{
+    width:18px;
+    height:18px;
+    margin-right:2px;
+  }
 
   /* Status bar */
   /* Board full width */
@@ -1301,6 +1306,7 @@ body[data-theme="dark"] .cell.hit{
           </div>
           <div class="mobile-top-tool-wrap">
             <button class="mobile-top-tool" id="undoToolTop" onclick="undoPlace()">
+              <span class="tool-svg-wrap mobile-top-svg" id="undoSVGTop"></span>
               <span class="mobile-top-tool-name" data-i18n="tool.undo">UNDO</span>
               <span class="mobile-top-tool-count" id="undoCountTop">×1</span>
             </button>
@@ -1308,6 +1314,7 @@ body[data-theme="dark"] .cell.hit{
           </div>
           <div class="mobile-top-tool-wrap">
             <button class="mobile-top-tool" id="hammerToolTop" onclick="activateHammer()">
+              <span class="tool-svg-wrap mobile-top-svg" id="hammerToolSVGTop"></span>
               <span class="mobile-top-tool-name" data-i18n="tool.hammer">HAMMER</span>
               <span class="mobile-top-tool-count" id="hammerCountTop">×2</span>
             </button>
@@ -3796,7 +3803,9 @@ function renderHold(){
   // SVG icons — mobile toolbar
   const hSvg=$id('holdSVG');       if(hSvg) hSvg.innerHTML=HOLD_SVG;
   const uSvg=$id('undoSVG');       if(uSvg) uSvg.innerHTML=UNDO_SVG;
+  const uSvgTop=$id('undoSVGTop'); if(uSvgTop) uSvgTop.innerHTML=UNDO_SVG;
   const hmSvg=$id('hammerToolSVG');if(hmSvg) hmSvg.innerHTML=getHammerSVG();
+  const hmSvgTop=$id('hammerToolSVGTop');if(hmSvgTop) hmSvgTop.innerHTML=getHammerSVG();
   // SVG icons — desktop panel
   const hSvgD=$id('holdSVGDesktop');       if(hSvgD) hSvgD.innerHTML=HOLD_SVG;
   const uSvgD=$id('undoSVGDesktop');       if(uSvgD) uSvgD.innerHTML=UNDO_SVG;
@@ -5094,15 +5103,3 @@ document.addEventListener('keydown',handleFirstAudioUnlock);
 
 </body>
 </html>
-  const hct=$id('hammerCountTop');
-  if(hct){
-    hct.textContent=hammerLabel;
-    hct.classList.toggle('zero',hammers<=0);
-  }
-  const uct=$id('undoCountTop');
-  if(uct){
-    uct.textContent=`×${remaining}`;
-    uct.classList.toggle('zero',remaining<=0);
-  }
-  const utt=$id('undoToolTop');
-  if(utt) utt.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
