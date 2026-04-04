@@ -386,7 +386,7 @@ body[data-theme="dark"] #board{
   0%,100%{box-shadow:inset 0 0 0 2px var(--warn), 0 0 10px rgba(255,200,0,0.2);}
   50%{box-shadow:inset 0 0 0 2px var(--warn), 0 0 28px rgba(255,200,0,0.55), 0 0 6px rgba(255,200,0,0.3) inset;}
 }
-.mob-tool.tutorial-target,.tool-item.tutorial-target{
+.mobile-top-tool.tutorial-target,.mob-tool.tutorial-target,.tool-item.tutorial-target{
   border-color:var(--warn)!important;
   box-shadow:0 0 0 1px rgba(255,200,0,0.28),0 0 18px rgba(255,200,0,0.14);
 }
@@ -660,6 +660,7 @@ body[data-theme="dark"] .cell.hit{
   text-shadow:0 0 10px rgba(58,232,235,0.7);
   animation:multTextPulse 0.6s ease-in-out infinite alternate;
 }
+.mobile-tools-bar{display:none;}
 @keyframes multBarPulse{
   from{filter:brightness(1);}
   to{filter:brightness(1.35);}
@@ -779,6 +780,47 @@ body[data-theme="dark"] .cell.hit{
   .score-bar-lbl{font-size:0.3rem;}
   .score-bar-item{padding:5px 2px;}
   .mult-track{width:44px!important;}
+  .mobile-tools-bar{
+    display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);
+    gap:6px;
+    margin:6px 0 8px;
+  }
+  .mobile-top-token,
+  .mobile-top-tool{
+    min-height:34px;
+    border:1px solid var(--border2);
+    border-radius:10px;
+    background:var(--surface);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:var(--muted2);
+    font-family:'DM Mono',monospace;
+    font-size:0.4rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 6px;
+  }
+  .mobile-top-token-num,
+  .mobile-top-tool-count{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.05rem;
+    line-height:1;
+    color:var(--accent2);
+  }
+  .mobile-top-tool{
+    cursor:pointer;
+    transition:all 0.12s;
+  }
+  .mobile-top-tool:hover{border-color:var(--accent2);}
+  .mobile-top-tool.exhausted{opacity:0.4;cursor:not-allowed;}
+  .mobile-top-tool.active-tool{
+    border-color:var(--danger);
+    background:rgba(255,45,85,0.08);
+  }
+  .mobile-top-tool-name{color:var(--text);}
 
   /* Status bar */
   /* Board full width */
@@ -837,14 +879,9 @@ body[data-theme="dark"] .cell.hit{
     color:var(--muted2);
   }
   .hand-zone-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end;}
-  .hand-zone-token{
-    display:flex;align-items:center;gap:5px;
-    background:var(--surface2);border:1px solid var(--border2);
-    padding:4px 7px;border-radius:999px;
-    font-size:0.36rem;color:var(--muted2);letter-spacing:0.08em;
-  }
+  .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
-  .hand-inline-tools{display:flex;align-items:center;gap:6px;}
+  .hand-inline-tools{display:none;}
   .hand-row{display:flex;align-items:stretch;gap:8px;}
   .hand{flex:1;min-width:0;}
   .hold-slot{
@@ -1211,6 +1248,21 @@ body[data-theme="dark"] .cell.hit{
             <div class="mult-track" style="width:80px;margin-top:4px;"><div class="mult-fill" id="multBar" style="width:0%"></div></div>
           </div>
         </div>
+        <div class="mobile-tools-bar">
+          <div class="mobile-top-token">
+            <span>⬡</span>
+            <span class="mobile-top-token-num" id="tokensDispTop">0</span>
+            <span data-i18n="game.tokens">TOKENS</span>
+          </div>
+          <button class="mobile-top-tool" id="undoToolTop" onclick="undoPlace()">
+            <span class="mobile-top-tool-name" data-i18n="tool.undo">UNDO</span>
+            <span class="mobile-top-tool-count" id="undoCountTop">×1</span>
+          </button>
+          <button class="mobile-top-tool" id="hammerToolTop" onclick="activateHammer()">
+            <span class="mobile-top-tool-name" data-i18n="tool.hammer">HAMMER</span>
+            <span class="mobile-top-tool-count" id="hammerCountTop">×2</span>
+          </button>
+        </div>
       </div>
 
       <!-- HAND ZONE — desktop: order 3 (below grid) / mobile: order 1 (above grid) -->
@@ -1558,10 +1610,12 @@ function getVisibleHoldArea(){
 }
 function getVisibleHammerTool(){
   const mob=$id('hammerTool');
+  const top=$id('hammerToolTop');
   const desk=$id('hammerToolDesktop');
+  if(top&&top.offsetParent!==null) return top;
   if(mob&&mob.offsetParent!==null) return mob;
   if(desk&&desk.offsetParent!==null) return desk;
-  return mob||desk;
+  return top||mob||desk;
 }
 function getTutorialFocusRect(){
   if(!tutorial.active) return null;
@@ -1709,7 +1763,7 @@ function genTutorialBlock(cells){
 }
 function clearTutorialHighlights(){
   document.querySelectorAll('.cell.tutorial-target,.cell.tutorial-row,.cell.tutorial-box,.cell.tutorial-zone,.cell.tutorial-last').forEach(el=>el.classList.remove('tutorial-target','tutorial-row','tutorial-box','tutorial-zone','tutorial-last'));
-  [$id('hammerTool'),$id('hammerToolDesktop'),$id('holdArea'),$id('holdAreaDesktop')].forEach(el=>{if(el)el.classList.remove('tutorial-target');});
+  [$id('hammerToolTop'),$id('hammerTool'),$id('hammerToolDesktop'),$id('holdArea'),$id('holdAreaDesktop')].forEach(el=>{if(el)el.classList.remove('tutorial-target');});
 }
 function applyTutorialHighlights(){
   if(!tutorial.active) return;
@@ -1743,7 +1797,7 @@ function applyTutorialHighlights(){
     if(cell) cell.classList.add('tutorial-last');
   }
   if(tutorial.lockedTool==='hammer'){
-    [$id('hammerTool'),$id('hammerToolDesktop')].forEach(el=>{if(el)el.classList.add('tutorial-target');});
+    [$id('hammerToolTop'),$id('hammerTool'),$id('hammerToolDesktop')].forEach(el=>{if(el)el.classList.add('tutorial-target');});
   }
   if(tutorial.lockedTool==='hold'){
     [$id('holdArea'),$id('holdAreaDesktop')].forEach(el=>{if(el)el.classList.add('tutorial-target');});
@@ -2963,6 +3017,23 @@ function cloneBlock(block){
     pos:block.pos?block.pos.map(([r,c])=>[r,c]):null,
   };
 }
+function cloneGridState(gs){
+  if(!Array.isArray(gs)) return null;
+  return gs.map(row=>Array.isArray(row)?[...row]:Array(9).fill(0)).slice(0,9);
+}
+function cloneUndoEntry(entry){
+  if(!entry) return null;
+  return {
+    hi:entry.hi==='HOLD'?'HOLD':Number(entry.hi),
+    block:cloneBlock(entry.block),
+    gs:cloneGridState(entry.gs),
+    sb:Number(entry.sb)||0,
+    mb:Number(entry.mb)||1,
+    cb:Number(entry.cb)||0,
+    sk:Number(entry.sk)||0,
+    pos:Array.isArray(entry.pos)?entry.pos.map(([r,c])=>[r,c]):null,
+  };
+}
 function getGameState(){
   return {
     version:1,
@@ -2980,6 +3051,7 @@ function getGameState(){
     tokens,
     hammers,
     undoCharges,
+    undoStack:undoStack.map(cloneUndoEntry).filter(Boolean),
     toolBought:{...toolBought},
     activeIdx,
     settings:{...settings},
@@ -3036,6 +3108,8 @@ function restoreGame(save){
     hammerBought:Number(save.toolBought?.hammerBought)||0,
     rerollBought:Number(save.toolBought?.rerollBought)||0,
   };
+  undoStack=(save.undoStack||[]).map(cloneUndoEntry).filter(e=>e&&e.gs&&e.block);
+  if(undoStack.length>MAX_UNDO_STACK) undoStack=undoStack.slice(-MAX_UNDO_STACK);
   activeIdx=(typeof save.activeIdx==='number')?save.activeIdx:null;
   hammerMode=false;
 
@@ -3859,6 +3933,7 @@ function updateStats(){
   // Tokens — both mobile and desktop
   const td=$id('tokensDisp');if(td)td.textContent=tokens;
   const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
+  const tdt=$id('tokensDispTop');if(tdt)tdt.textContent=tokens;
   const rerollCost=getToolCost('reroll');
   const rc=$id('rerollCost');if(rc)rc.textContent=`${rerollCost}⬡`;
 
@@ -3877,6 +3952,11 @@ function updateStats(){
     hcd.textContent=hammerLabel;
     hcd.classList.toggle('zero',hammers<=0);
     hcd.classList.toggle('bump',false);
+  }
+  const hct=$id('hammerCountTop');
+  if(hct){
+    hct.textContent=hammerLabel;
+    hct.classList.toggle('zero',hammers<=0);
   }
   const hb=$id('hammerBuyBtn');
   if(hb){
@@ -3899,6 +3979,11 @@ function updateStats(){
   if(htd){
     htd.classList.toggle('exhausted',hammers<=0);
     htd.classList.toggle('active-tool',hammerMode);
+  }
+  const htt=$id('hammerToolTop');
+  if(htt){
+    htt.classList.toggle('exhausted',hammers<=0);
+    htt.classList.toggle('active-tool',hammerMode);
   }
 }
 
@@ -3944,6 +4029,13 @@ function updateUndoUI(){
   if(ubd){
     ubd.disabled=!canBuyUndo;
     ubd.title=`Buy +1 undo (${undoCost}⬡)`;
+  }
+  const utt=$id('undoToolTop');
+  if(utt) utt.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
+  const uct=$id('undoCountTop');
+  if(uct){
+    uct.textContent=`×${remaining}`;
+    uct.classList.toggle('zero',remaining<=0);
   }
 
   // Pips — mobile
@@ -4199,11 +4291,13 @@ function applyHammerMode(){
   const cursor=$id('hammer-cursor');
   // Both mobile and desktop hammer tool elements
   const hTool=$id('hammerTool');
+  const hToolTop=$id('hammerToolTop');
   const hToolD=$id('hammerToolDesktop');
 
   if(hammerMode){
     board.classList.add('hammer-mode');
     if(hTool) hTool.classList.add('active-tool');
+    if(hToolTop) hToolTop.classList.add('active-tool');
     if(hToolD) hToolD.classList.add('active-tool');
     cursor.innerHTML=getHammerSVG();
     cursor.style.display='block';
@@ -4214,6 +4308,7 @@ function applyHammerMode(){
   } else {
     board.classList.remove('hammer-mode');
     if(hTool) hTool.classList.remove('active-tool');
+    if(hToolTop) hToolTop.classList.remove('active-tool');
     if(hToolD) hToolD.classList.remove('active-tool');
     cursor.style.display='none';
     document.querySelectorAll('.cell.hammer-target').forEach(c=>c.classList.remove('hammer-target'));
@@ -4633,7 +4728,12 @@ function undoPlace(){
   if(undoCharges<=0) return;
   const snap=undoStack.pop();
   grid=snap.gs; snap.block.used=false; snap.block.pos=null;
-  _placedBlocks=_placedBlocks.filter(b=>b!==snap.block);
+  _placedBlocks=_placedBlocks.filter(b=>{
+    if(b===snap.block) return false;
+    if(!snap.pos||!Array.isArray(b.pos)||!b.pos.length) return true;
+    const overlap=b.pos.some(([br,bc])=>snap.pos.some(([sr,sc])=>sr===br&&sc===bc));
+    return !overlap;
+  });
   score=snap.sb; multiplier=snap.mb; moves=Math.max(0,moves-1); combo=snap.cb; streak=snap.sk||0;
   comboDecayedLastTurn=false;
   // Restore to hand or hold depending on source
@@ -4933,3 +5033,15 @@ document.addEventListener('keydown',handleFirstAudioUnlock);
 
 </body>
 </html>
+  const hct=$id('hammerCountTop');
+  if(hct){
+    hct.textContent=hammerLabel;
+    hct.classList.toggle('zero',hammers<=0);
+  }
+  const uct=$id('undoCountTop');
+  if(uct){
+    uct.textContent=`×${remaining}`;
+    uct.classList.toggle('zero',remaining<=0);
+  }
+  const utt=$id('undoToolTop');
+  if(utt) utt.classList.toggle('exhausted',!(canUndo&&(tutorialUndoOnly||!isTutorialLocked())));
