@@ -775,7 +775,17 @@ body[data-theme="dark"] .cell.hit{
   .board-wrap{width:100%;padding:0 6px;}
 
   /* Score bar */
-  .score-bar{width:100%!important;margin-bottom:4px;}
+  .score-bar-wrap{
+    display:flex;
+    align-items:stretch;
+    gap:6px;
+  }
+  .score-bar{
+    width:auto!important;
+    margin-bottom:0;
+    flex:1 1 auto;
+    min-width:0;
+  }
   .score-bar-num{font-size:1.1rem;}
   .score-bar-lbl{font-size:0.3rem;}
   .score-bar-item{padding:5px 2px;}
@@ -784,14 +794,16 @@ body[data-theme="dark"] .cell.hit{
     display:flex;
     flex-wrap:nowrap;
     gap:6px;
-    margin:6px 0 8px;
+    margin:0;
     overflow-x:auto;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
+    flex:0 0 auto;
+    align-items:stretch;
   }
   .mobile-top-token,
   .mobile-top-tool{
-    min-height:34px;
+    min-height:100%;
     border:1px solid var(--border2);
     border-radius:10px;
     background:var(--surface);
@@ -814,7 +826,7 @@ body[data-theme="dark"] .cell.hit{
     flex:0 0 auto;
   }
   .mobile-top-buy{
-    min-height:34px;
+    min-height:100%;
     border:1px solid var(--border2);
     border-radius:8px;
     background:rgba(40,212,255,0.08);
@@ -912,6 +924,7 @@ body[data-theme="dark"] .cell.hit{
   .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
   .hand-inline-tools{display:none;}
+  #handZone #rerollBtn{display:inline-flex;}
   .hand-row{display:flex;align-items:stretch;gap:8px;}
   .hand{flex:1;min-width:0;}
   .hold-slot{
