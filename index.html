@@ -780,6 +780,7 @@ body[data-theme="dark"] .cell.hit{
     display:flex;
     align-items:stretch;
     gap:6px;
+    margin-bottom:6px;
   }
   .score-bar{
     width:auto!important;
@@ -807,7 +808,7 @@ body[data-theme="dark"] .cell.hit{
     align-items:stretch;
   }
   .mobile-top-tool{
-    min-height:100%;
+    min-height:30px;
     border:1px solid var(--border2);
     border-radius:10px;
     background:var(--surface);
@@ -831,7 +832,7 @@ body[data-theme="dark"] .cell.hit{
     flex:0 0 auto;
   }
   .mobile-top-buy{
-    min-height:100%;
+    min-height:24px;
     border:1px solid var(--border2);
     border-radius:8px;
     background:rgba(40,212,255,0.08);
@@ -840,7 +841,7 @@ body[data-theme="dark"] .cell.hit{
     font-size:0.42rem;
     letter-spacing:0.08em;
     text-transform:uppercase;
-    padding:4px 6px;
+    padding:2px 6px;
     cursor:pointer;
     width:100%;
   }
@@ -884,7 +885,7 @@ body[data-theme="dark"] .cell.hit{
     width:100%!important;
     margin-top:0;
     margin-bottom:6px;
-    padding:10px 10px 8px;
+    padding:10px 10px 44px;
     order:3;
     border-radius:12px;
     background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
@@ -934,9 +935,21 @@ body[data-theme="dark"] .cell.hit{
   .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
   .hand-inline-tools{display:none;}
-  #handZone #rerollBtn{display:inline-flex;}
+  #handZone{
+    position:relative;
+  }
+  #handZone #rerollBtn{
+    display:inline-flex;
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    z-index:4;
+    min-height:30px;
+    padding:4px 8px;
+    font-size:0.38rem;
+  }
   .hand-row{display:flex;align-items:stretch;gap:8px;}
-  .hand{flex:1;min-width:0;}
+  .hand{flex:1;min-width:0;padding-right:92px;}
   .hold-slot{
     width:80px;min-height:88px;flex-shrink:0;
     border:1px dashed var(--accent2);
@@ -1032,6 +1045,8 @@ body[data-theme="dark"] .cell.hit{
   .hold-slot{width:70px;min-height:78px;}
   .hold-slot .hold-preview{min-height:34px;}
   .tray .block-mini{--tray-cell-size:23px;}
+  #handZone #rerollBtn{right:8px;bottom:8px;font-size:0.34rem;padding:3px 6px;}
+  .hand{padding-right:84px;}
   .cell svg{width:82%;height:82%;}
   .tray-slot{padding:6px 2px 4px;min-width:72px;}
 }
