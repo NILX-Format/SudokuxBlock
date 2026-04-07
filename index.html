@@ -649,6 +649,7 @@ body[data-theme="dark"] .cell.hit{
 .score-bar-num.warn{color:var(--warn);}
 .score-bar-num.danger{color:var(--danger);}
 .score-bar-lbl{font-size:0.4rem;color:var(--muted2);letter-spacing:0.18em;text-transform:uppercase;}
+.item-token{display:none;}
 @keyframes scoreBump{0%,100%{transform:scale(1)}40%{transform:scale(1.25)}}
 .score-bump{animation:scoreBump 0.25s ease;}
 .mult-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;}
@@ -786,22 +787,25 @@ body[data-theme="dark"] .cell.hit{
     flex:1 1 auto;
     min-width:0;
   }
+  .score-bar-item.item-moves,
+  .score-bar-item.item-penalty,
+  .score-bar-divider.d-score-moves,
+  .score-bar-divider.d-moves-combo,
+  .score-bar-divider.d-combo-penalty,
+  .score-bar-divider.d-penalty-token{display:none;}
+  .score-bar-item.item-token{display:flex;}
   .score-bar-num{font-size:1.28rem;}
   .score-bar-lbl{font-size:0.34rem;}
   .score-bar-item{padding:6px 3px;}
   .mult-track{width:44px!important;}
   .mobile-tools-bar{
-    display:flex;
-    flex-wrap:nowrap;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:6px;
     margin:0;
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    flex:0 0 auto;
+    flex:0 0 168px;
     align-items:stretch;
   }
-  .mobile-top-token,
   .mobile-top-tool{
     min-height:100%;
     border:1px solid var(--border2);
@@ -817,7 +821,7 @@ body[data-theme="dark"] .cell.hit{
     letter-spacing:0.08em;
     text-transform:uppercase;
     padding:4px 6px;
-    flex:0 0 auto;
+    width:100%;
   }
   .mobile-top-tool-wrap{
     display:flex;
@@ -837,7 +841,7 @@ body[data-theme="dark"] .cell.hit{
     text-transform:uppercase;
     padding:4px 6px;
     cursor:pointer;
-    flex:0 0 auto;
+    width:100%;
   }
   .mobile-top-buy:disabled{
     opacity:0.35;
@@ -845,7 +849,6 @@ body[data-theme="dark"] .cell.hit{
     border-color:var(--border);
     cursor:not-allowed;
   }
-  .mobile-top-token-num,
   .mobile-top-tool-count{
     font-family:'Bebas Neue',sans-serif;
     font-size:1.18rem;
@@ -863,6 +866,22 @@ body[data-theme="dark"] .cell.hit{
     background:rgba(255,45,85,0.08);
   }
   .mobile-top-tool-name{color:var(--text);}
+  .mobile-top-reroll{
+    min-height:100%;
+    border:1px solid var(--border2);
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--muted2);
+    font-family:'DM Mono',monospace;
+    font-size:0.4rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 6px;
+    cursor:pointer;
+    width:100%;
+    grid-column:1 / span 2;
+  }
+  .mobile-top-reroll:disabled{opacity:0.35;cursor:not-allowed;}
   .mobile-top-svg{
     width:18px;
     height:18px;
@@ -930,7 +949,7 @@ body[data-theme="dark"] .cell.hit{
   .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
   .hand-inline-tools{display:none;}
-  #handZone #rerollBtn{display:inline-flex;}
+  #handZone #rerollBtn{display:none;}
   .hand-row{display:flex;align-items:stretch;gap:8px;}
   .hand{flex:1;min-width:0;}
   .hold-slot{
@@ -1273,37 +1292,37 @@ body[data-theme="dark"] .cell.hit{
       <div class="score-bar-wrap">
         <div class="mobile-section-label" data-i18n="game.board">Board</div>
         <div class="score-bar">
-          <div class="score-bar-item">
+          <div class="score-bar-item item-score">
             <div class="score-bar-num" id="scoreDisp">0</div>
             <div class="score-bar-lbl" data-i18n="score.score">Score</div>
           </div>
-          <div class="score-bar-divider"></div>
-          <div class="score-bar-item">
+          <div class="score-bar-divider d-score-moves"></div>
+          <div class="score-bar-item item-moves">
             <div class="score-bar-num accent2" id="movesDisp">0</div>
             <div class="score-bar-lbl" data-i18n="score.moves">Moves</div>
           </div>
-          <div class="score-bar-divider"></div>
-          <div class="score-bar-item">
+          <div class="score-bar-divider d-moves-combo"></div>
+          <div class="score-bar-item item-combo">
             <div class="score-bar-num warn" id="comboDisp">0</div>
             <div class="score-bar-lbl" data-i18n="score.combo">Combo</div>
           </div>
-          <div class="score-bar-divider"></div>
-          <div class="score-bar-item">
+          <div class="score-bar-divider d-combo-penalty"></div>
+          <div class="score-bar-item item-penalty">
             <div class="score-bar-num danger" id="errorsDisp">0</div>
             <div class="score-bar-lbl" data-i18n="score.penalty">Penalty</div>
           </div>
-          <div class="score-bar-divider"></div>
-          <div class="score-bar-item score-bar-mult">
+          <div class="score-bar-divider d-penalty-token"></div>
+          <div class="score-bar-item item-token" id="tokenStatTop">
+            <div class="score-bar-num warn" id="tokensDispTopBar">0</div>
+            <div class="score-bar-lbl" data-i18n="game.tokens">TOKENS</div>
+          </div>
+          <div class="score-bar-divider d-token-mult"></div>
+          <div class="score-bar-item score-bar-mult item-mult">
             <div class="score-bar-num accent3" id="multDisp">C0 ×1.0</div>
             <div class="mult-track" style="width:80px;margin-top:4px;"><div class="mult-fill" id="multBar" style="width:0%"></div></div>
           </div>
         </div>
         <div class="mobile-tools-bar">
-          <div class="mobile-top-token">
-            <span>⬡</span>
-            <span class="mobile-top-token-num" id="tokensDispTop">0</span>
-            <span data-i18n="game.tokens">TOKENS</span>
-          </div>
           <div class="mobile-top-tool-wrap">
             <button class="mobile-top-tool" id="undoToolTop" onclick="undoPlace()">
               <span class="tool-svg-wrap mobile-top-svg" id="undoSVGTop"></span>
@@ -1320,6 +1339,7 @@ body[data-theme="dark"] .cell.hit{
             </button>
             <button class="mobile-top-buy" id="hammerBuyBtnTop" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
           </div>
+          <button class="mobile-top-reroll" id="rerollBtnTop" onclick="doReroll()">↺ <span data-i18n="tool.reroll">Reroll</span> <span id="rerollCostTop">2⬡</span></button>
         </div>
       </div>
 
@@ -3649,6 +3669,7 @@ function renderTray(){
   $id('lastWarn').textContent=(rem===1&&!holdBlock)?t('game.lastBlock'):'';
   const rrCost=getToolCost('reroll');
   const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<rrCost;
+  const rrTop=$id('rerollBtnTop');if(rrTop)rrTop.disabled=tokens<rrCost;
   // Highlight both hold areas when a block is selected
   const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
   const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
@@ -3993,9 +4014,10 @@ function updateStats(){
   // Tokens — both mobile and desktop
   const td=$id('tokensDisp');if(td)td.textContent=tokens;
   const tdm=$id('tokensDispMob');if(tdm)tdm.textContent=tokens;
-  const tdt=$id('tokensDispTop');if(tdt)tdt.textContent=tokens;
+  const tdt=$id('tokensDispTopBar');if(tdt)tdt.textContent=tokens;
   const rerollCost=getToolCost('reroll');
   const rc=$id('rerollCost');if(rc)rc.textContent=`${rerollCost}⬡`;
+  const rct=$id('rerollCostTop');if(rct)rct.textContent=`${rerollCost}⬡`;
 
   // Hammer count / buy affordance — mobile + desktop
   const hammerCost=getToolCost('hammer');
