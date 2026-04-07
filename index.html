@@ -931,25 +931,22 @@ body[data-theme="dark"] .cell.hit{
     letter-spacing:0.24em;
     color:var(--muted2);
   }
-  .hand-zone-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .hand-zone-actions{gap:6px;flex-wrap:nowrap;justify-content:flex-end;align-items:center;}
   .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
   .hand-inline-tools{display:none;}
-  #handZone{
-    position:relative;
-  }
   #handZone #rerollBtn{
     display:inline-flex;
-    position:absolute;
-    right:10px;
-    bottom:10px;
-    z-index:4;
+    position:static;
+    z-index:auto;
     min-height:30px;
     padding:4px 8px;
     font-size:0.38rem;
+    margin-left:auto;
+    flex:0 0 auto;
   }
   .hand-row{display:flex;align-items:stretch;gap:8px;}
-  .hand{flex:1;min-width:0;padding-right:92px;}
+  .hand{flex:1;min-width:0;padding-right:0;}
   .hold-slot{
     width:80px;min-height:88px;flex-shrink:0;
     border:1px dashed var(--accent2);
@@ -1045,8 +1042,8 @@ body[data-theme="dark"] .cell.hit{
   .hold-slot{width:70px;min-height:78px;}
   .hold-slot .hold-preview{min-height:34px;}
   .tray .block-mini{--tray-cell-size:23px;}
-  #handZone #rerollBtn{right:8px;bottom:8px;font-size:0.34rem;padding:3px 6px;}
-  .hand{padding-right:84px;}
+  #handZone #rerollBtn{font-size:0.34rem;padding:3px 6px;}
+  .hand{padding-right:0;}
   .cell svg{width:82%;height:82%;}
   .tray-slot{padding:6px 2px 4px;min-width:72px;}
 }
