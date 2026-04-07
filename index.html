@@ -825,8 +825,9 @@ body[data-theme="dark"] .cell.hit{
   }
   .mobile-top-tool-wrap{
     display:flex;
-    align-items:center;
-    gap:4px;
+    flex-direction:column;
+    align-items:stretch;
+    gap:3px;
     flex:0 0 auto;
   }
   .mobile-top-buy{
@@ -866,22 +867,6 @@ body[data-theme="dark"] .cell.hit{
     background:rgba(255,45,85,0.08);
   }
   .mobile-top-tool-name{color:var(--text);}
-  .mobile-top-reroll{
-    min-height:100%;
-    border:1px solid var(--border2);
-    border-radius:10px;
-    background:var(--surface);
-    color:var(--muted2);
-    font-family:'DM Mono',monospace;
-    font-size:0.4rem;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    padding:4px 6px;
-    cursor:pointer;
-    width:100%;
-    grid-column:1 / span 2;
-  }
-  .mobile-top-reroll:disabled{opacity:0.35;cursor:not-allowed;}
   .mobile-top-svg{
     width:18px;
     height:18px;
@@ -949,7 +934,7 @@ body[data-theme="dark"] .cell.hit{
   .hand-zone-token{display:none;}
   .hand-zone-token-num{font-size:1rem;}
   .hand-inline-tools{display:none;}
-  #handZone #rerollBtn{display:none;}
+  #handZone #rerollBtn{display:inline-flex;}
   .hand-row{display:flex;align-items:stretch;gap:8px;}
   .hand{flex:1;min-width:0;}
   .hold-slot{
@@ -1339,7 +1324,6 @@ body[data-theme="dark"] .cell.hit{
             </button>
             <button class="mobile-top-buy" id="hammerBuyBtnTop" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
           </div>
-          <button class="mobile-top-reroll" id="rerollBtnTop" onclick="doReroll()">↺ <span data-i18n="tool.reroll">Reroll</span> <span id="rerollCostTop">2⬡</span></button>
         </div>
       </div>
 
@@ -3669,7 +3653,6 @@ function renderTray(){
   $id('lastWarn').textContent=(rem===1&&!holdBlock)?t('game.lastBlock'):'';
   const rrCost=getToolCost('reroll');
   const rr=$id('rerollBtn');if(rr)rr.disabled=tokens<rrCost;
-  const rrTop=$id('rerollBtnTop');if(rrTop)rrTop.disabled=tokens<rrCost;
   // Highlight both hold areas when a block is selected
   const ha=$id('holdArea');if(ha) ha.classList.toggle('swap-ready',activeIdx!==null);
   const had=$id('holdAreaDesktop');if(had) had.classList.toggle('swap-ready',activeIdx!==null);
@@ -4017,7 +4000,6 @@ function updateStats(){
   const tdt=$id('tokensDispTopBar');if(tdt)tdt.textContent=tokens;
   const rerollCost=getToolCost('reroll');
   const rc=$id('rerollCost');if(rc)rc.textContent=`${rerollCost}⬡`;
-  const rct=$id('rerollCostTop');if(rct)rct.textContent=`${rerollCost}⬡`;
 
   // Hammer count / buy affordance — mobile + desktop
   const hammerCost=getToolCost('hammer');
