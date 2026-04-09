@@ -672,6 +672,114 @@ body[data-theme="dark"] .cell.hit{
 }
 .mobile-section-label{display:none;}
 
+/* ── LEVEL / EXP ── */
+.exp-lane{
+  width:450px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  padding:6px 8px;
+  margin-bottom:6px;
+}
+.exp-meta{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  min-width:120px;
+}
+.exp-level{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1rem;
+  color:var(--accent2);
+  letter-spacing:0.08em;
+}
+.exp-text{
+  font-size:0.42rem;
+  color:var(--muted2);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+.exp-track{
+  flex:1;
+  height:8px;
+  border:1px solid var(--border2);
+  background:var(--board);
+  border-radius:999px;
+  overflow:hidden;
+}
+.exp-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--accent2),var(--accent3));
+  transition:width 0.26s ease;
+}
+.exp-fill.level-burst{
+  animation:expBurst 0.42s ease;
+}
+@keyframes expBurst{
+  0%{filter:brightness(1)}
+  40%{filter:brightness(1.6)}
+  100%{filter:brightness(1)}
+}
+@media(max-width:520px){.exp-lane{width:340px;}}
+@media(max-width:380px){.exp-lane{width:300px;}}
+
+.levelup-overlay{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:100200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  transition:opacity 0.14s ease;
+}
+.levelup-overlay.show{opacity:1;}
+.levelup-card{
+  min-width:min(86vw,420px);
+  background:rgba(11,15,26,0.84);
+  border:1px solid var(--accent2);
+  box-shadow:0 20px 70px rgba(0,0,0,0.45),0 0 28px rgba(58,232,235,0.26);
+  padding:18px 16px;
+  text-align:center;
+  transform:scale(0.92);
+  animation:levelPop 420ms cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+body[data-theme="light"] .levelup-card{
+  background:rgba(253,246,227,0.94);
+}
+.levelup-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2rem;
+  letter-spacing:0.12em;
+  color:var(--accent2);
+}
+.levelup-sub{
+  margin-top:2px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.2rem;
+  letter-spacing:0.08em;
+  color:var(--warn);
+}
+.levelup-unlock{
+  margin-top:8px;
+  font-size:0.58rem;
+  color:var(--text);
+  letter-spacing:0.08em;
+}
+@keyframes levelPop{
+  0%{transform:scale(0.9);opacity:0}
+  45%{transform:scale(1.05);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+body.levelup-freeze .game-layout{
+  pointer-events:none;
+  filter:saturate(0.92);
+}
+
 /* buttons */
 .btn{width:100%;padding:8px;background:transparent;border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.12s;text-align:center;text-transform:uppercase;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -782,6 +890,12 @@ body[data-theme="dark"] .cell.hit{
     gap:6px;
     margin-bottom:6px;
   }
+  .exp-lane{
+    width:100%!important;
+    margin-bottom:6px;
+  }
+  .exp-meta{min-width:100px;}
+  .exp-level{font-size:0.92rem;}
   .score-bar{
     width:auto!important;
     margin-bottom:0;
@@ -1316,7 +1430,6 @@ body[data-theme="dark"] .cell.hit{
           <div class="score-bar-divider d-token-mult"></div>
           <div class="score-bar-item score-bar-mult item-mult">
             <div class="score-bar-num accent3" id="multDisp">C0 ×1.0</div>
-            <div class="mult-track" style="width:80px;margin-top:4px;"><div class="mult-fill" id="multBar" style="width:0%"></div></div>
           </div>
         </div>
         <div class="mobile-tools-bar">
@@ -1336,6 +1449,15 @@ body[data-theme="dark"] .cell.hit{
             </button>
             <button class="mobile-top-buy" id="hammerBuyBtnTop" onclick="buyHammerCharge(event)" data-i18n="tool.buy">Buy</button>
           </div>
+        </div>
+      </div>
+      <div class="exp-lane" id="expLane">
+        <div class="exp-meta">
+          <span class="exp-level" id="levelDisp">Lv.1</span>
+          <span class="exp-text" id="expText">0 / 100 EXP</span>
+        </div>
+        <div class="exp-track">
+          <div class="exp-fill" id="expBar"></div>
         </div>
       </div>
 
@@ -1597,8 +1719,16 @@ body[data-theme="dark"] .cell.hit{
     <div class="modal-btns">
       <button class="modal-btn primary" onclick="restartGame()">▶ <span data-i18n="go.playAgain">Play Again</span></button>
       <button class="modal-btn" onclick="showLBFromGame()">🏆 <span data-i18n="menu.leaderboard">Leaderboard</span></button>
-      <button class="modal-btn" onclick="goScreen('screen-menu')">✕ <span data-i18n="menu.mainMenu">Main Menu</span></button>
+      <button class="modal-btn" onclick="goMainMenuFromGameOver()">✕ <span data-i18n="menu.mainMenu">Main Menu</span></button>
     </div>
+  </div>
+</div>
+
+<div class="levelup-overlay" id="levelupOverlay">
+  <div class="levelup-card">
+    <div class="levelup-title">LEVEL UP!</div>
+    <div class="levelup-sub" id="levelupSub">LEVEL 2</div>
+    <div class="levelup-unlock" id="levelupUnlock">Keep going!</div>
   </div>
 </div>
 
@@ -1618,12 +1748,29 @@ function goPlay(){
   bgmPlay();
 }
 function restartGame(){
+  cleanupDrag();
+  hammerMode=false;
+  hammerBusy=false;
+  activeIdx=null;
+  applyHammerMode();
   document.getElementById('go-overlay').classList.remove('show');
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.body.style.overflow='';
+  const gs=document.getElementById('game-settings-overlay');if(gs)gs.classList.remove('show');
+  const vo=document.getElementById('volume-overlay');if(vo)vo.classList.remove('show');
+  const ho=document.getElementById('help-overlay');if(ho)ho.classList.remove('show');
   clearSavedGame();
+  goScreen('screen-game');
   newGame();
   bgmPlay();
 }
 function showLBFromGame(){document.getElementById('go-overlay').classList.remove('show');renderLB('all');goScreen('screen-leaderboard');}
+function goMainMenuFromGameOver(){
+  const go=document.getElementById('go-overlay');
+  if(go) go.classList.remove('show');
+  bgmStop();
+  goScreen('screen-menu');
+}
 function showHelp(){document.getElementById('help-overlay').classList.add('show');}
 function hideHelp(){document.getElementById('help-overlay').classList.remove('show');}
 
@@ -1933,6 +2080,9 @@ function setupTutorialState(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;comboDecayedLastTurn=false;emptyTurns=0;tokens=0;hammers=2;hammerMode=false;
+  level=1;exp=0;expToNext=100;levelUpBusy=false;pendingLevelUps=[];
+  hideLevelUpUI();
+  document.body.classList.remove('levelup-freeze');
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
@@ -2441,6 +2591,14 @@ const LANG={
     'score.moves':'步数',
     'score.combo':'连击',
     'score.penalty':'惩罚',
+    'level.label':'Lv.{level}',
+    'level.progress':'{exp} / {need} EXP',
+    'level.levelNum':'LEVEL {level}',
+    'level.unlocked':'已解锁',
+    'level.keepGoing':'继续前进！',
+    'level.unlock.undo':'撤回已解锁',
+    'level.unlock.twoCell':'2格方块已解锁',
+    'level.unlock.elephant':'大象技能已解锁 🐘',
     'game.hand':'手牌',
     'game.board':'棋盘',
     'game.tokens':'代币',
@@ -2555,6 +2713,14 @@ const LANG={
     'score.moves':'Moves',
     'score.combo':'Combo',
     'score.penalty':'Penalty',
+    'level.label':'Lv.{level}',
+    'level.progress':'{exp} / {need} EXP',
+    'level.levelNum':'LEVEL {level}',
+    'level.unlocked':'Unlocked',
+    'level.keepGoing':'Keep going!',
+    'level.unlock.undo':'Undo Unlocked',
+    'level.unlock.twoCell':'2-Cell Blocks Unlocked',
+    'level.unlock.elephant':'Elephant Skill Unlocked 🐘',
     'game.hand':'Hand',
     'game.board':'Board',
     'game.tokens':'TOKENS',
@@ -2841,8 +3007,15 @@ const SHAPES=[
   {name:'I6v',tier:3,cells:[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]]},
   {name:'L6',tier:3,cells:[[0,0],[1,0],[2,0],[3,0],[3,1],[3,2]]},
   {name:'U',tier:3,cells:[[0,0],[0,2],[1,0],[1,1],[1,2]]},
-  {name:'C',tier:3,cells:[[0,0],[0,1],[0,2],[1,0],[2,0],[2,1],[2,2]]},
+  // 7-cell "凸" shape for clearer recognition vs previous "C" form.
+  {name:'凸7',tier:3,cells:[[0,1],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]},
 ];
+const BLOCK_TYPES={
+  SINGLE:'1',
+  DOUBLE:'2',
+  TRIPLE:'3',
+  LARGE:'4',
+};
 const DIFFICULTY={
   easy:{1:70,2:25,3:5},
   medium:{1:50,2:35,3:15},
@@ -2877,6 +3050,96 @@ function updateCombo(curCombo,didClear){
 }
 function tokensEarned(base,mult){
   return Math.min(5,Math.max(1,Math.round(base*mult)));
+}
+function getUnlock(levelNum){
+  if(levelNum===3) return t('level.unlock.undo');
+  if(levelNum===5) return t('level.unlock.twoCell');
+  if(levelNum===10) return t('level.unlock.elephant');
+  return null;
+}
+function pauseGame(ms=200){
+  document.body.classList.add('levelup-freeze');
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      document.body.classList.remove('levelup-freeze');
+      resolve();
+    },ms);
+  });
+}
+function sleep(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+function updateExpUI(){
+  const l=$id('levelDisp');
+  const tEl=$id('expText');
+  const bar=$id('expBar');
+  if(l) l.textContent=t('level.label',{level});
+  if(tEl) tEl.textContent=t('level.progress',{exp,need:expToNext});
+  if(bar){
+    const pct=expToNext>0?Math.max(0,Math.min(100,(exp/expToNext)*100)):0;
+    bar.style.width=`${pct}%`;
+  }
+}
+function showLevelUpUI(levelNum,unlock){
+  const overlay=$id('levelupOverlay');
+  if(!overlay) return;
+  const sub=$id('levelupSub');
+  const msg=$id('levelupUnlock');
+  if(sub) sub.textContent=t('level.levelNum',{level:levelNum});
+  if(msg) msg.textContent=unlock?`${t('level.unlocked')}: ${unlock}`:t('level.keepGoing');
+  overlay.classList.add('show');
+  const expBar=$id('expBar');
+  if(expBar){
+    expBar.classList.remove('level-burst');
+    void expBar.offsetWidth;
+    expBar.classList.add('level-burst');
+  }
+}
+function hideLevelUpUI(){
+  const overlay=$id('levelupOverlay');
+  if(overlay) overlay.classList.remove('show');
+}
+function sfxLevelUp(){
+  tone([740],0.08,'triangle',0.16);
+  tone([980],0.09,'sine',0.14,0.05);
+  tone([1240],0.1,'sine',0.13,0.1);
+}
+async function onLevelUp(levelNum){
+  const unlock=getUnlock(levelNum);
+  await pauseGame(200);
+  showLevelUpUI(levelNum,unlock);
+  sfxLevelUp();
+  if(window.navigator&&window.navigator.vibrate){
+    try{window.navigator.vibrate(50);}catch(e){}
+  }
+  await sleep(850);
+  hideLevelUpUI();
+  if(unlock) showLoopHint(`${t('level.unlocked')}: ${unlock}`,1600);
+}
+async function processLevelUpQueue(){
+  if(levelUpBusy) return;
+  levelUpBusy=true;
+  while(pendingLevelUps.length){
+    const lv=pendingLevelUps.shift();
+    await onLevelUp(lv);
+  }
+  levelUpBusy=false;
+}
+function levelUpNow(){
+  level++;
+  expToNext=100+level*50;
+  pendingLevelUps.push(level);
+  processLevelUpQueue();
+}
+function addExp(scoreGained){
+  const gain=Math.max(0,Math.round(Number(scoreGained)||0));
+  if(gain<=0) return;
+  exp+=gain;
+  while(exp>=expToNext){
+    exp-=expToNext;
+    levelUpNow();
+  }
+  updateExpUI();
 }
 function performanceEffect(perf){
   return 40/(1+Math.exp(-(perf-50)/10));
@@ -2922,6 +3185,56 @@ function getShapeWeights(){
   if(p<70) return {1:34,2:41,3:25};
   return {1:54,2:31,3:15};
 }
+function getBlockWeights(lv){
+  if(lv<=2) return {1:100};
+  if(lv<=5) return {1:80,2:20};
+  if(lv<=10) return {1:60,2:30,3:10};
+  if(lv<=15) return {1:50,2:30,3:15,4:5};
+  if(lv<=20) return {1:40,2:30,3:20,4:10};
+  return {1:35,2:30,3:25,4:10};
+}
+function getBoardSpace(){
+  return grid.flat().filter(v=>v===0).length;
+}
+function applyLevelWeightGuards(baseWeights,lv){
+  const next={...baseWeights};
+  // Newbie protection: struggling early game always gets easy 1-cell.
+  if(lv<=5&&emptyTurns>=2){
+    return {1:100};
+  }
+  // High-level breathing: when board is tight, reduce large pieces.
+  if(lv>=15&&getBoardSpace()<20&&next[4]){
+    next[4]=Math.max(0,Math.round(next[4]*0.35));
+    next[1]=(next[1]||0)+8;
+    next[2]=(next[2]||0)+6;
+  }
+  return next;
+}
+function getShapeBlockType(shape){
+  const n=shape?.cells?.length||0;
+  if(n<=1) return BLOCK_TYPES.SINGLE;
+  if(n<=3) return BLOCK_TYPES.DOUBLE;
+  if(n<=5) return BLOCK_TYPES.TRIPLE;
+  return BLOCK_TYPES.LARGE;
+}
+function getRandomBlockType(lv){
+  const raw=getBlockWeights(lv);
+  const weights=applyLevelWeightGuards(raw,lv);
+  const keys=Object.keys(weights).filter(k=>weights[k]>0);
+  const total=keys.reduce((sum,k)=>sum+weights[k],0);
+  if(total<=0) return BLOCK_TYPES.SINGLE;
+  let rand=Math.random()*total;
+  for(const type of keys){
+    rand-=weights[type];
+    if(rand<=0) return type;
+  }
+  return keys[keys.length-1]||BLOCK_TYPES.SINGLE;
+}
+function createBlockByType(type){
+  const pool=SHAPES.filter(s=>getShapeBlockType(s)===String(type));
+  if(!pool.length) return SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
 function countPossiblePlacements(blocks=null){
   const pool=(blocks||[...hand.filter(Boolean),...(holdBlock?[holdBlock]:[])])
     .filter(b=>b&&!b.used);
@@ -2940,10 +3253,8 @@ function giveEmergencyBlock(){
   return block;
 }
 function pickShape(){
-  const w=getShapeWeights();
-  const tot=w[1]+w[2]+w[3];let roll=Math.random()*tot,acc=0,tier=1;
-  for(const t of[1,2,3]){acc+=w[t];if(roll<acc){tier=t;break;}}
-  const pool=SHAPES.filter(s=>s.tier===tier);return pool[Math.floor(Math.random()*pool.length)];
+  const type=getRandomBlockType(level);
+  return createBlockByType(type);
 }
 function rotateCells(cells){const mr=Math.max(...cells.map(([r])=>r));return cells.map(([r,c])=>[c,mr-r]);}
 function normCells(cells){const mr=Math.min(...cells.map(([r])=>r)),mc=Math.min(...cells.map(([,c])=>c));return cells.map(([r,c])=>[r-mr,c-mc]);}
@@ -2961,6 +3272,9 @@ function hidePause(){hideGameSettings();}
 // ══════════════════════════════════════════════════════
 let grid=[],hand=[],holdBlock=null;
 let score=0,moves=0,errors=0,combo=0,multiplier=1,streak=0;
+let level=1,exp=0,expToNext=100;
+let levelUpBusy=false;
+let pendingLevelUps=[];
 let comboDecayedLastTurn=false;
 let emptyTurns=0;
 let tokens=0,hammers=2,activeIdx=null;
@@ -2974,6 +3288,8 @@ const UNDO_PIP_MAX=3;
 const MAX_UNDO_STACK=12;
 const UNDO_STOCK_CAP=5;
 const HAMMER_STOCK_CAP=5;
+const SKILL_MAX_CHAIN=2;
+const SKILL_DIGITS={PENGUIN:9,ELEPHANT:3,CHICKEN:8};
 const DRAG_THRESHOLD=5;
 let hammerMode=false,hammerBusy=false,_placedBlocks=[];
 const ANALYTICS_ENDPOINT='';
@@ -3119,6 +3435,9 @@ function getGameState(){
     moves,
     combo,
     errors,
+    level,
+    exp,
+    expToNext,
     multiplier,
     streak,
     emptyTurns,
@@ -3170,6 +3489,9 @@ function restoreGame(save){
   moves=Number(save.moves)||0;
   combo=Number(save.combo)||0;
   errors=Number(save.errors)||0;
+  level=Math.max(1,Number(save.level)||1);
+  exp=Math.max(0,Number(save.exp)||0);
+  expToNext=Math.max(100,Number(save.expToNext)||100+level*50);
   multiplier=Number(save.multiplier)||1;
   streak=Number(save.streak)||0;
   emptyTurns=Number(save.emptyTurns)||0;
@@ -3190,6 +3512,10 @@ function restoreGame(save){
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
+  levelUpBusy=false;
+  pendingLevelUps=[];
+  hideLevelUpUI();
+  document.body.classList.remove('levelup-freeze');
   clearSnap();
   _csz=0;
 
@@ -3517,6 +3843,9 @@ function newGame(){
   grid=Array.from({length:9},()=>Array(9).fill(0));
   hand=[];holdBlock=null;activeIdx=null;undoStack=[];undoCharges=UNDO_GIFT;toolBought={undoBought:0,hammerBought:0,rerollBought:0};_placedBlocks=[];
   score=0;moves=0;errors=0;combo=0;multiplier=1;streak=0;comboDecayedLastTurn=false;emptyTurns=0;tokens=0;hammers=2;hammerMode=false;
+  level=1;exp=0;expToNext=100;levelUpBusy=false;pendingLevelUps=[];
+  hideLevelUpUI();
+  document.body.classList.remove('levelup-freeze');
   if(drag.ghost) drag.ghost.remove();
   if(drag.preview) drag.preview.remove();
   drag={state:DragState.IDLE,block:null,ghost:null,preview:null,sourceIdx:null,pointerId:null,captureEl:null,anchorOffsetX:0,anchorOffsetY:0,dragLift:0,lift:0,ghostX:0,ghostY:0,previewX:0,previewY:0,gridX:null,gridY:null};
@@ -3930,6 +4259,9 @@ function applyPlacementRewards(block,pos){
   if(clearInfo.tokenGain>0) tokens+=clearInfo.tokenGain;
   const pts=Math.round(block.cells.length*10*multiplier);
   score+=pts+clearInfo.bonus;
+  if(!tutorial.active&&clearInfo.bonus>0){
+    addExp(clearInfo.bonus);
+  }
   trackMoveClear(clearInfo);
   return {pts,clearInfo};
 }
@@ -3944,6 +4276,9 @@ function finishPlacementFeedback(pos,clearInfo,scoreAnchor){
   renderAll();
   pos.forEach(([r,c])=>{const cell=getCell(r,c);if(cell)cell.classList.add('cell-pop');});
   const clearDelay=runClearFeedback(clearInfo);
+  if(!tutorial.active&&clearInfo&&clearInfo.clears>0&&scoreAnchor){
+    setTimeout(()=>resolveAnimalSkillChain(scoreAnchor),Math.max(180,clearDelay+80));
+  }
   setTimeout(()=>checkGameOver(), clearDelay ? clearDelay+80 : 0);
   if(settings.pops&&scoreAnchor) scorePop(`+${scoreAnchor.points}`,[scoreAnchor.r,scoreAnchor.c]);
   return clearDelay||0;
@@ -3976,7 +4311,13 @@ function placeHoldBlock(r,c){
   const {pts,clearInfo}=applyPlacementRewards(block,pos);
   pushUndoSnapshot('HOLD',block,snapshot,pos);
   holdBlock=null; fillHand();
-  const clearDelay=finishPlacementFeedback(pos,clearInfo,{r,c,points:pts+clearInfo.bonus});
+  const pivotCell=block.cells[block.cells.length-1]||block.cells[0];
+  const clearDelay=finishPlacementFeedback(pos,clearInfo,{
+    r:r+(pivotCell?.[0]||0),
+    c:c+(pivotCell?.[1]||0),
+    val:pivotCell?.[2]||block.cells[0]?.[2]||0,
+    points:pts+clearInfo.bonus
+  });
   afterTutorialPlacement(clearInfo,clearDelay);
 }
 
@@ -3992,18 +4333,12 @@ function updateStats(){
   const penalty=getErrorPenalty();
   $id('errorsDisp').textContent=`-${penalty.toFixed(1)}`;
   $id('comboDisp').textContent=`${combo}${comboDecayedLastTurn?' ↓':''}`;
-  const comboPct=Math.min((combo/4)*100,100);
   const multEl=$id('multDisp');
   if(multEl){
     multEl.textContent=`C${combo} ×${multiplier.toFixed(1)}`;
     multEl.classList.toggle('mult-high',multiplier>=3);
     multEl.classList.toggle('warn',multiplier>=2&&multiplier<3);
     multEl.classList.toggle('accent3',multiplier<2);
-  }
-  const multBarEl=$id('multBar');
-  if(multBarEl){
-    multBarEl.style.width=comboPct+'%';
-    multBarEl.classList.toggle('mult-high',multiplier>=3);
   }
 
   // Tokens — both mobile and desktop
@@ -4049,6 +4384,7 @@ function updateStats(){
     hbt.disabled=!canBuyHammer;
     hbt.title=`Buy +1 hammer (${hammerCost}⬡)`;
   }
+  updateExpUI();
 
   // Hammer tool state — mobile + desktop
   const ht=$id('hammerTool');
@@ -4284,6 +4620,9 @@ function storeToHold(idx){
     hand=[];
     phase2Setup();
     return;
+  }
+  if(!tutorial.active&&hand.length===0){
+    fillHand();
   }
   renderAll();
 }
@@ -4568,7 +4907,13 @@ function tryPlace(hi,sr,sc){
   const {pts,clearInfo}=applyPlacementRewards(block,pos);
   pushUndoSnapshot(hi,block,snapshot,pos);
   hand[hi]=null;hand=hand.filter(Boolean);fillHand();activeIdx=null;
-  const clearDelay=finishPlacementFeedback(pos,clearInfo,{r:sr,c:sc,points:pts+clearInfo.bonus});
+  const pivotCell=block.cells[block.cells.length-1]||block.cells[0];
+  const clearDelay=finishPlacementFeedback(pos,clearInfo,{
+    r:sr+(pivotCell?.[0]||0),
+    c:sc+(pivotCell?.[1]||0),
+    val:pivotCell?.[2]||block.cells[0]?.[2]||0,
+    points:pts+clearInfo.bonus
+  });
   afterTutorialPlacement(clearInfo,clearDelay);
 }
 
@@ -4794,6 +5139,193 @@ function runClearFeedback(info){
   return clearDelay;
 }
 
+function cellKey(r,c){
+  return `${r},${c}`;
+}
+
+function collectGlobalClearPlans(){
+  const plans=[];
+  for(let r=0;r<9;r++){
+    if(grid[r].every(v=>v)&&lineValid('row',r)){
+      plans.push({kind:'row',idx:r,cells:Array.from({length:9},(_,c)=>[r,c])});
+    }
+  }
+  for(let c=0;c<9;c++){
+    if(grid.every(row=>row[c])&&lineValid('col',c)){
+      plans.push({kind:'col',idx:c,cells:Array.from({length:9},(_,r)=>[r,c])});
+    }
+  }
+  for(let br=0;br<3;br++)for(let bc=0;bc<3;bc++){
+    let full=true;
+    for(let dr=0;dr<3;dr++)for(let dc=0;dc<3;dc++){
+      if(!grid[br*3+dr][bc*3+dc]) full=false;
+    }
+    if(full&&boxValid(br,bc)){
+      const order=[[1,1],[0,1],[1,0],[1,2],[2,1],[0,0],[0,2],[2,0],[2,2]];
+      plans.push({kind:'box',br,bc,cells:order.map(([dr,dc])=>[br*3+dr,bc*3+dc])});
+    }
+  }
+  return plans;
+}
+
+function summarizeClearPlans(plans){
+  let bonus=0,tokenBase=0,clears=0;
+  plans.forEach(plan=>{
+    clears++;
+    if(plan.kind==='box'){
+      bonus+=120;
+      tokenBase+=2;
+      return;
+    }
+    bonus+=80;
+    tokenBase+=1;
+  });
+  return {bonus,tokenBase,clears};
+}
+
+function getAdjacentEmptyCells(r,c,maxCount=2){
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const out=[];
+  for(const [dr,dc] of dirs){
+    const nr=r+dr,nc=c+dc;
+    if(nr<0||nr>=9||nc<0||nc>=9) continue;
+    if(grid[nr][nc]!==0) continue;
+    out.push({r:nr,c:nc});
+    if(out.length>=maxCount) break;
+  }
+  return out;
+}
+
+function findNearCompleteCellForValue(value){
+  const targets=findAlmostCompleteTargets()
+    .filter(t=>t&&t.val===value&&grid[t.r]?.[t.c]===0)
+    .filter(t=>!usedNums(t.r,t.c).has(value));
+  if(!targets.length) return null;
+  return targets[Math.floor(Math.random()*targets.length)];
+}
+
+function findNearestEmptyInRowOrCol(r,c){
+  let best=null;
+  for(let x=0;x<9;x++){
+    if(grid[r][x]===0){
+      const d=Math.abs(x-c);
+      if(best===null||d<best.dist) best={r,c:x,dist:d};
+    }
+  }
+  for(let y=0;y<9;y++){
+    if(grid[y][c]===0){
+      const d=Math.abs(y-r);
+      if(best===null||d<best.dist) best={r:y,c,dist:d};
+    }
+  }
+  return best;
+}
+
+function showSkillTag(text,r,c){
+  if(!settings.pops) return;
+  scorePop(text,[r,c]);
+}
+
+function penguinSkill(trigger){
+  const target=findNearestEmptyInRowOrCol(trigger.r,trigger.c);
+  if(!target) return {changed:false};
+  grid[target.r][target.c]=trigger.val;
+  showSkillTag('🐧',target.r,target.c);
+  return {changed:true};
+}
+
+function elephantSkill(trigger){
+  let changed=false;
+  for(let c=0;c<9;c++){
+    if(grid[trigger.r][c]!==0){
+      grid[trigger.r][c]=0;
+      changed=true;
+    }
+  }
+  if(changed){
+    showSkillTag('🐘',trigger.r,4);
+    sfxHammer();
+  }
+  return {changed};
+}
+
+function chickenSkill(trigger,spawnedByChicken){
+  const target=findNearCompleteCellForValue(trigger.val);
+  if(!target) return {changed:false};
+  if(usedNums(target.r,target.c).has(trigger.val)) return {changed:false};
+  grid[target.r][target.c]=trigger.val;
+  spawnedByChicken.add(cellKey(target.r,target.c));
+  showSkillTag('🐔',target.r,target.c);
+  return {changed:true};
+}
+
+function triggerAnimalSkill(trigger,spawnedByChicken){
+  if(!trigger||!trigger.val) return {changed:false};
+  if(trigger.val===SKILL_DIGITS.PENGUIN) return penguinSkill(trigger);
+  if(trigger.val===SKILL_DIGITS.ELEPHANT) return elephantSkill(trigger);
+  if(trigger.val===SKILL_DIGITS.CHICKEN) return chickenSkill(trigger,spawnedByChicken);
+  return {changed:false};
+}
+
+function pickSkillTriggerCell(plans,spawnedByChicken){
+  for(const plan of plans){
+    for(const [r,c] of plan.cells){
+      const key=cellKey(r,c);
+      if(spawnedByChicken.has(key)) continue;
+      const val=grid[r][c];
+      if(val===SKILL_DIGITS.PENGUIN||val===SKILL_DIGITS.ELEPHANT||val===SKILL_DIGITS.CHICKEN){
+        return {r,c,val};
+      }
+    }
+  }
+  return null;
+}
+
+function applySkillClearPlans(plans){
+  if(!plans.length) return false;
+  const reward=summarizeClearPlans(plans);
+  updateComboDecay(true);
+  streak=combo;
+  multiplier=computeMultiplier();
+  const tokenGain=reward.tokenBase>0?tokensEarned(reward.tokenBase,multiplier):0;
+  if(tokenGain>0) tokens+=tokenGain;
+  score+=reward.bonus;
+  if(!tutorial.active&&reward.bonus>0){
+    addExp(reward.bonus);
+  }
+  trackMoveClear({clears:reward.clears});
+  applyClearPlans(plans);
+  runTokenFeedback({plans,tokenGain});
+  showComboText(combo,plans);
+  shakeBoard(combo,plans);
+  if(tokenGain>0) animateTokenHUD();
+  return true;
+}
+
+function resolveAnimalSkillChain(triggerCell){
+  if(!triggerCell||!triggerCell.val) return;
+  const spawnedByChicken=new Set();
+  let queue=[{r:triggerCell.r,c:triggerCell.c,val:triggerCell.val}];
+  let chain=0;
+
+  while(queue.length&&chain<SKILL_MAX_CHAIN){
+    const current=queue.shift();
+    const skillResult=triggerAnimalSkill(current,spawnedByChicken);
+    if(!skillResult.changed) continue;
+    const plans=collectGlobalClearPlans();
+    if(!plans.length) continue;
+    const nextTrigger=pickSkillTriggerCell(plans,spawnedByChicken);
+    if(!applySkillClearPlans(plans)) break;
+    if(nextTrigger){
+      queue.push(nextTrigger);
+      chain++;
+    }else{
+      break;
+    }
+  }
+  renderAll();
+}
+
 // Legacy flash (kept for error feedback)
 function flashLine(type,idx,ok){
   const col=ok?'rgba(158,255,59,0.22)':'rgba(255,45,85,0.12)';
@@ -4855,6 +5387,8 @@ function checkGameOver(){
 function triggerGameOver(){
   sfxGameOver();
   bgmStop();
+  // Ended run should not auto-resume when pressing Play from menu.
+  clearSavedGame();
   const isRec=submitScore(score,settings.difficulty,moves,combo);
   const filled=grid.flat().filter(v=>v).length;
   recordRunAtGameOver(filled);
@@ -4928,6 +5462,10 @@ function beginPointerDrag(e, ghost, block, sourceIdx, point=null){
   startGhostDrag(ghost, block, sourceIdx, px, py);
   drag.pointerId=(e.pointerId!=null)?e.pointerId:null;
   drag.captureEl=target||null;
+  // Global fallback listeners: some browsers occasionally miss element-level up/cancel.
+  document.addEventListener('pointermove',onPMove,{passive:false});
+  document.addEventListener('pointerup',onPUp);
+  document.addEventListener('pointercancel',onPUp);
 }
 
 function cleanupDrag(){
@@ -4980,6 +5518,16 @@ function getActiveHoldArea(){
   if(desk && desk.offsetParent!==null) return desk;
   return mob; // fallback
 }
+function isPointOrGhostOverHoldArea(e, holdArea, pad=14){
+  if(!holdArea) return false;
+  const hr=holdArea.getBoundingClientRect();
+  const inPoint=e.clientX>=hr.left-pad&&e.clientX<=hr.right+pad&&e.clientY>=hr.top-pad&&e.clientY<=hr.bottom+pad;
+  if(inPoint) return true;
+  if(!drag.ghost) return false;
+  const gr=drag.ghost.getBoundingClientRect();
+  const intersects=!(gr.right<hr.left-pad||gr.left>hr.right+pad||gr.bottom<hr.top-pad||gr.top>hr.bottom+pad);
+  return intersects;
+}
 
 function onPMove(e){
   if(drag.pointerId!=null&&e.pointerId!=null&&e.pointerId!==drag.pointerId) return;
@@ -4997,8 +5545,7 @@ function onPMove(e){
   if(drag.sourceIdx!=='HOLD'){
     const holdArea=getActiveHoldArea();
     if(holdArea){
-      const hr=holdArea.getBoundingClientRect();
-      const over=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
+      const over=isPointOrGhostOverHoldArea(e,holdArea,14);
       // Clear other hold area highlight
       [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
       holdArea.classList.toggle('drag-over', over);
@@ -5039,11 +5586,22 @@ function onPMove(e){
 }
 
 function onPUp(e){
-  if(drag.pointerId!=null&&e.pointerId!=null&&e.pointerId!==drag.pointerId) return;
   document.removeEventListener('pointermove',onPMove);
   document.removeEventListener('pointerup',onPUp);
   document.removeEventListener('pointercancel',onPUp);
   if(drag.state===DragState.IDLE)return;
+  if(drag.pointerId!=null&&e.pointerId!=null&&e.pointerId!==drag.pointerId){
+    cleanupDrag();
+    renderTray();
+    renderBoard();
+    return;
+  }
+  if(e.type==='pointercancel'){
+    cleanupDrag();
+    renderTray();
+    renderBoard();
+    return;
+  }
 
   // Clear hold drag-over highlight on both
   [$id('holdArea'),$id('holdAreaDesktop')].forEach(ha=>{if(ha)ha.classList.remove('drag-over');});
@@ -5058,14 +5616,20 @@ function onPUp(e){
   if(di!=='HOLD'){
     const holdArea=getActiveHoldArea();
     if(holdArea){
-      const hr=holdArea.getBoundingClientRect();
-      const overHold=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
+      const overHold=isPointOrGhostOverHoldArea(e,holdArea,16);
       if(overHold){ storeToHold(di); return; }
     }
   }
 
   if(drop) tryPlace(di, drop.r, drop.c);
 }
+
+window.addEventListener('blur',()=>{
+  if(drag.state===DragState.IDLE) return;
+  cleanupDrag();
+  renderTray();
+  renderBoard();
+});
 
 // ── Score pop ──
 function scorePop(text,[r,c],isPenalty=false){
